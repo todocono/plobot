@@ -1,0 +1,9 @@
+2011.08.26:
+	- Para programar DuinoBot.v1.x con el AVRDoper que está en RobotGroup, utilizar el siguiente BAT:
+		DuinoBot.bat
+		
+	- Para programar DuinoBot.v1.x el USBasp mío, utilizar el siguiente BAT:
+		DuinoBot.USBAsp.bat
+		
+	- Para programar DuinoBot.Kids.v1.x con el AVRDoper que está en RobotGroup, utilizar el siguiente BAT:
+		- Kids.bat

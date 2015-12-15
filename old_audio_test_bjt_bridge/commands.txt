@@ -1,0 +1,4 @@
+ffmpeg -i mambo_no_5-lou_bega.wav -ar 8000 -ac 1 -acodec pcm_u8 -f u8 mambo_1ch_8bit.pcm
+
+diskutil list
+sudo dd if=mambo_1ch_8bit.pcm of=/dev/disk1 bs=1m
