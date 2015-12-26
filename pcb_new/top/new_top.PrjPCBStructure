@@ -1,0 +1,6 @@
+Record=SheetSymbol|SourceDocument=BOT-TOP.SchDoc|Designator=COL0|SchDesignator=COL0|FileName=led_column.SchDoc|SymbolType=Normal|RawFileName=led_column.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=BOT-TOP.SchDoc|Designator=COL1|SchDesignator=COL1|FileName=led_column.SchDoc|SymbolType=Normal|RawFileName=led_column.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=BOT-TOP.SchDoc|Designator=COL2|SchDesignator=COL2|FileName=led_column.SchDoc|SymbolType=Normal|RawFileName=led_column.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=BOT-TOP.SchDoc|Designator=COL3|SchDesignator=COL3|FileName=led_column.SchDoc|SymbolType=Normal|RawFileName=led_column.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=BOT-TOP.SchDoc|Designator=COL4|SchDesignator=COL4|FileName=led_column.SchDoc|SymbolType=Normal|RawFileName=led_column.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=TopLevelDocument|FileName=BOT-TOP.SchDoc
