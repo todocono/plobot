@@ -117,7 +117,7 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 
 [Document7]
-DocumentPath=test_5.PcbDoc
+DocumentPath=main_pcb.PcbDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
