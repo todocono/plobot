@@ -6,3 +6,5 @@
 *.LOG
 
 *.PcbDocPreview
+
+pcb_new/main/main_pcb.$$$
