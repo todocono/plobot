@@ -8,3 +8,7 @@
 *.PcbDocPreview
 
 pcb_new/main/main_pcb.$$$
+
+pcb_new/main/Project Outputs for main_pcb/Design Rule Check - main_pcb.html
+
+pcb_new/main/Project Outputs for main_pcb/Design Rule Check - main_pcb.drc
