@@ -64,9 +64,8 @@ void setup() {
 
   pinMode(sd_cs, OUTPUT);
   
-  // 64khz pwm
-  TCCR1A = B10000001; // Mode 5 = fast 8-bit PWM with TOP=FF
-  TCCR1B = B00001001; // ... WGM, 1:1 clock scale -> 64 kHz
+  TCCR1B = 0x01;   // Timer 1: PWM 9 & 10 @ 32 kHz
+  TCCR2B = 0x01;   // Timer 2: PWM 3 & 11 @ 32 kHz
  
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
@@ -86,6 +85,69 @@ void my_tone(unsigned long for_millis, unsigned long period_micros, int volume=1
     delayMicroseconds(period_micros / 2);
     digitalWrite(spk_n_pin, LOW);
     delayMicroseconds(10);
+  }
+}
+
+void stop_right()
+{
+  digitalWrite(motor_r_fwd, LOW);
+  digitalWrite(motor_r_back, LOW);
+}
+
+void stop_left()
+{
+  analogWrite(motor_l_fwd, 0);
+  analogWrite(motor_l_back, 0);
+}
+
+void stop()
+{
+  stop_right();
+  stop_left();
+}
+
+void move(int left, int right, int left_pn, int right_pn)
+{
+  stop();
+  delayMicroseconds(5);
+  if(left != 0) {
+    if(left > 0)
+      analogWrite(motor_l_fwd, left);
+    else
+      analogWrite(motor_l_back, -left);
+  }
+  if(right != 0) {
+    analogWrite(motor_r_en, abs(right));
+    if(right > 0)
+      digitalWrite(motor_r_fwd, HIGH);
+    else
+      digitalWrite(motor_r_back, HIGH);
+  }
+  
+  int steps_left = 0, steps_right = 0;
+  int last_st_l = digitalRead(motor_l_pulse);
+  int last_st_r = digitalRead(motor_r_pulse);
+  while(steps_left < left_pn || steps_right < right_pn) 
+  {/*
+    static int i=0;
+    if((i++) % 100 == 0) {
+      Serial.print("steps_left ");
+      Serial.print(steps_left);
+      Serial.print(" steps_right ");
+      Serial.println(steps_right);
+    }*/
+    int st_l = digitalRead(motor_l_pulse);
+    int st_r = digitalRead(motor_r_pulse);
+    if(st_l != last_st_l)
+      ++steps_left;
+    if(st_r != last_st_r)
+      ++steps_right;
+    if(steps_left >= left_pn)
+      stop_left();
+    if(steps_right >= right_pn)
+      stop_right();
+    last_st_l = st_l;
+    last_st_r = st_r;
   }
 }
 
@@ -145,18 +207,23 @@ void do_go()
   my_tone(300, 800);
   set_both_light_colors(0,0,0);
   
+  const int ls = 240, rs = 240;
+  
   for(unsigned card_idx=0;card_idx<n_cards_queued;++card_idx) {
     set_both_light_colors(200,200,200);
     const unsigned card = cards_queued[card_idx];
     switch(card) {
       case sIdForward:
-        
+        move(ls, rs, 800, 800);
         break;
       case sIdBackward:
+        move(-ls, -rs, 800, 800);
         break;
       case sIdTurnLeft:
+        move(ls, -rs, 300, 300);
         break;
       case sIdTurnRight:
+        move(-ls, rs, 300, 300);
         break;
     }
     set_both_light_colors(0,0,0);

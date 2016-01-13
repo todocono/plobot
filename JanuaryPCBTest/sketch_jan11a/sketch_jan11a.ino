@@ -21,13 +21,20 @@ const int led_pin = 21;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(2, led_pin, NEO_GRB + NEO_KHZ800);
 
+
+
 void setup() {
+  /*
   // 64khz pwm
   TCCR1A = B10000001; // Mode 5 = fast 8-bit PWM with TOP=FF
 //  TCCR1B = B00001001; // ... WGM, 1:1 clock scale -> 64 kHz
   TCCR0B = TCCR0B & B11111000 | B00000001;
   TCCR1B = TCCR1B & B11111000 | B00000001;
   TCCR2B = TCCR2B & B11111000 | B00000001;
+*/
+
+  TCCR1B = 0x01;   // Timer 1: PWM 9 & 10 @ 32 kHz
+TCCR2B = 0x01;   // Timer 2: PWM 3 & 11 @ 32 kHz
 
   pinMode(motor_l_fwd, OUTPUT);
   pinMode(motor_l_back, OUTPUT);
