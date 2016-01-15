@@ -23,6 +23,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(2, led_pin, NEO_GRB + NEO_KHZ800);
 
 
 
+
 void setup() {
   /*
   // 64khz pwm
@@ -76,63 +77,176 @@ void stop()
   stop_left();
 }
 
-void move(int left, int right, int left_pn, int right_pn)
+int clamp_pwm(int x)
 {
-  stop();
-  delayMicroseconds(5);
+  return max(185, min(255, x));
+}
+
+const unsigned long sMinimumTimeBetweenPulses = 200;
+
+const int rfid_pulse = PB4;
+
+class PulseCounter
+{public:
+   PulseCounter(int pin)
+     : pin_(pin), 
+       last_pulse_start_(0),
+       pulses_(0), last_state_(digitalRead(pin))
+   {
+     //pinMode(rfid_pulse, OUTPUT);
+   }
+   
+   void count() {
+     const int state = digitalRead(pin_);
+     
+     if(state == LOW && last_state_ == HIGH) {
+       // Pulse start
+       const unsigned long now = micros();
+       if((now - last_pulse_start_) > sMinimumTimeBetweenPulses) {
+         ++pulses_;
+         last_pulse_start_ = now;
+         last_state_ = LOW;
+         /*
+         if(pin_ == motor_r_pulse)
+           digitalWrite(rfid_pulse, HIGH);
+           */
+       }
+     } else if(state == HIGH && last_state_ == LOW) {
+       // Pulse end
+       last_state_ = HIGH;
+/*
+       if(pin_ == motor_r_pulse)
+         digitalWrite(rfid_pulse, LOW);*/
+     }
+   }
+   
+   unsigned pulses()const {
+     return pulses_;
+   }
+ private:
+    const int pin_;
+    
+    int last_state_;
+    unsigned pulses_;
+    unsigned long last_pulse_start_;
+};
+
+static int left_power = 230, right_power = 230;
+void setup_motors(int left, int right) {
+  
   if(left != 0) {
     if(left > 0)
-      analogWrite(motor_l_fwd, left);
+      analogWrite(motor_l_fwd, clamp_pwm(left_power));
     else
-      analogWrite(motor_l_back, -left);
+      analogWrite(motor_l_back, clamp_pwm(left_power));
   }
   if(right != 0) {
-    analogWrite(motor_r_en, abs(right));
+    analogWrite(motor_r_en, clamp_pwm(right_power));
     if(right > 0)
       digitalWrite(motor_r_fwd, HIGH);
     else
       digitalWrite(motor_r_back, HIGH);
   }
+}
+
+void move(int left_fwd, int right_fwd, int left_pn, int right_pn)
+{
+  Serial.print("left_power");
+  Serial.print(left_power);
+  Serial.print(" right_power ");
+  Serial.println(right_power);
   
-  int steps_left = 0, steps_right = 0;
-  int last_st_l = digitalRead(motor_l_pulse);
-  int last_st_r = digitalRead(motor_r_pulse);
-  while(steps_left < left_pn || steps_right < right_pn) 
-  {/*
-    static int i=0;
-    if((i++) % 100 == 0) {
-      Serial.print("steps_left ");
-      Serial.print(steps_left);
-      Serial.print(" steps_right ");
-      Serial.println(steps_right);
-    }*/
-    int st_l = digitalRead(motor_l_pulse);
-    int st_r = digitalRead(motor_r_pulse);
-    if(st_l != last_st_l)
-      ++steps_left;
-    if(st_r != last_st_r)
-      ++steps_right;
-    if(steps_left >= left_pn)
+  /*
+  strip.setPixelColor(0, strip.Color(32,32,32));
+  strip.setPixelColor(1, strip.Color(32,32,32));
+  strip.show();
+  */
+
+  stop();
+  delayMicroseconds(5);
+  setup_motors(left_fwd, right_fwd);
+    
+  const int sMaxPulseSlip = 20;
+  const unsigned long started_micros = micros();
+  unsigned long left_finished_micros = 0, right_finished_micros = 0;
+  PulseCounter count_left(motor_l_pulse),
+               count_right(motor_r_pulse);
+  while(count_left.pulses() < left_pn || count_right.pulses() < right_pn)
+  {
+    count_left.count();
+    count_right.count();
+    
+    /*
+    const int slip = int(count_left.pulses()) - int(count_right.pulses());
+    if(abs(slip) <= sMaxPulseSlip) {
+      setup_motors(left, right);
+    } else if(slip > 0) {
+      setup_motors(180, right);
+    } else {
+      setup_motors(left, 180);
+    }
+    */
+    
+    boolean turn_off_left = false, turn_off_right = false;
+ 
+    if(count_left.pulses() >= left_pn && left_finished_micros == 0) {
+      left_finished_micros = micros();
+      turn_off_left = true;
+    }
+    if(count_right.pulses() >= right_pn && right_finished_micros == 0) {
+      right_finished_micros = micros();
+      turn_off_right = true;
+    }
+    
+    if(count_right.pulses() >= right_pn && count_left.pulses() >= left_pn) {
       stop_left();
-    if(steps_right >= right_pn)
       stop_right();
-    last_st_l = st_l;
-    last_st_r = st_r;
+    }
+    /*
+    if(turn_off_left) {
+      strip.setPixelColor(1, strip.Color(0,0,0));
+      strip.show();
+    }
+    
+    if(turn_off_right) {
+      strip.setPixelColor(0, strip.Color(0,0,0));
+      strip.show();
+    }
+    */
+  }
+  
+  Serial.print("left off pulses ");
+  Serial.println(count_left.pulses());
+  Serial.print("right off pulses ");
+  Serial.println(count_right.pulses());
+
+  Serial.print("left off millis ");
+  Serial.println(left_finished_micros / 1000L);
+  Serial.print("right off millis ");
+  Serial.println(right_finished_micros / 1000L);
+  
+  const unsigned long sOffsetEpsilon = 1000L;
+  const long offset = long(left_finished_micros) - long(right_finished_micros);
+  Serial.print("offset ");
+  Serial.println(offset);
+  if(offset > 0) {
+    const unsigned long offset = left_finished_micros - right_finished_micros;
+    
+    --right_power;
+    ++left_power;
+    
+  } else {
+    
+    ++right_power;
+    --left_power;
+    
   }
 }
 
+
 void loop() {
-  const int ls = 240, rs = 240;
   
-  move(ls, rs, 1600, 1600);
-  for(int i=0;i<100;++i)
-    _delay_loop_2(30000);
-    
-    /*
-  move(ls, -rs, 300, 300);
-  for(int i=0;i<100;++i)
-    _delay_loop_2(30000);
-    */
-  
+  move(1, 1, 1600, 1600);
+  delay(500);
 }
 

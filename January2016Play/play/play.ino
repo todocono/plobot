@@ -73,7 +73,9 @@ void setup() {
   Serial.println("-----"); 
 }
 
-void my_tone(unsigned long for_millis, unsigned long period_micros, int volume=100) {
+#define DEFAULT_VOLUME 75
+
+void my_tone(unsigned long for_millis, unsigned long period_micros, int volume=DEFAULT_VOLUME) {
   analogWrite(spk_en_pin, volume);
   for(const unsigned long sm=millis();(millis() - sm) < for_millis;) {
     digitalWrite(spk_p_pin, HIGH);
@@ -106,50 +108,100 @@ void stop()
   stop_left();
 }
 
-void move(int left, int right, int left_pn, int right_pn)
-{
-  stop();
-  delayMicroseconds(5);
-  if(left != 0) {
-    if(left > 0)
-      analogWrite(motor_l_fwd, left);
-    else
-      analogWrite(motor_l_back, -left);
-  }
-  if(right != 0) {
-    analogWrite(motor_r_en, abs(right));
-    if(right > 0)
-      digitalWrite(motor_r_fwd, HIGH);
-    else
-      digitalWrite(motor_r_back, HIGH);
+class mover
+{public:
+  mover()
+    : left_factor(1), right_factor(1) {
   }
   
-  int steps_left = 0, steps_right = 0;
-  int last_st_l = digitalRead(motor_l_pulse);
-  int last_st_r = digitalRead(motor_r_pulse);
-  while(steps_left < left_pn || steps_right < right_pn) 
-  {/*
-    static int i=0;
-    if((i++) % 100 == 0) {
-      Serial.print("steps_left ");
-      Serial.print(steps_left);
-      Serial.print(" steps_right ");
-      Serial.println(steps_right);
-    }*/
-    int st_l = digitalRead(motor_l_pulse);
-    int st_r = digitalRead(motor_r_pulse);
-    if(st_l != last_st_l)
-      ++steps_left;
-    if(st_r != last_st_r)
-      ++steps_right;
-    if(steps_left >= left_pn)
-      stop_left();
-    if(steps_right >= right_pn)
-      stop_right();
-    last_st_l = st_l;
-    last_st_r = st_r;
+  static int clamp_pwm(int x)
+  {
+    return max(175, min(255, x));
   }
-}
+
+  void move(int left, int right, int dur_millis)
+  {
+    stop();
+    delayMicroseconds(5);
+    if(left != 0) {
+      if(left > 0)
+        analogWrite(motor_l_fwd, clamp_pwm(left));
+      else
+        analogWrite(motor_l_back, clamp_pwm(-left));
+    }
+    if(right != 0) {
+      analogWrite(motor_r_en, clamp_pwm(abs(right)));
+      if(right > 0)
+        digitalWrite(motor_r_fwd, HIGH);
+      else
+        digitalWrite(motor_r_back, HIGH);
+    }
+    
+    int dur_left = dur_millis * left_factor;
+    int dur_right = dur_millis * right_factor;
+    
+    strip.setPixelColor(0, strip.Color(128,128,128));
+    strip.setPixelColor(1, strip.Color(128,128,128));
+    strip.show();
+    
+    // TODO: Ignore short pulses at the start
+    delay(75);
+    
+    int steps_left = 0, steps_right = 0;
+    int last_st_l = digitalRead(motor_l_pulse);
+    int last_st_r = digitalRead(motor_r_pulse);
+    unsigned long sm = millis();
+    boolean left_stopped = false, right_stopped = false;
+    while(true)
+    {
+      int st_l = digitalRead(motor_l_pulse);
+      int st_r = digitalRead(motor_r_pulse);
+      if(st_l != last_st_l) {
+        ++steps_left;
+      }
+      if(st_r != last_st_r) {
+        ++steps_right;
+      }
+      last_st_l = st_l;
+      last_st_r = st_r;
+      
+      const unsigned long now = millis();
+      if((now - sm) > dur_left) {
+        stop_left();
+        left_stopped = true;
+      }
+      
+      if((now - sm) > dur_right) {
+        stop_right();
+        right_stopped = true;
+      }
+      
+      if(left_stopped && right_stopped)
+        break;
+    }
+    Serial.print("steps_left ");
+    Serial.print(steps_left);
+    Serial.print(" steps_right ");
+    Serial.println(steps_right);
+    /*
+    if(steps_left > steps_right) {
+      right_factor = 1;
+      left_factor = float(steps_right) / float(steps_left);
+    } else {
+      left_factor = 1;
+      right_factor = float(steps_left) / float(steps_right);
+    }
+    */
+    Serial.print("left_factor ");
+    Serial.print(left_factor);
+    Serial.print(" right_factor ");
+    Serial.println(right_factor);
+  }
+
+ private:
+  float left_factor, right_factor;
+};
+
 
 void set_both_light_colors(uint8_t r, uint8_t g, uint8_t b) {
   const uint32_t c = strip.Color(r,g,b);
@@ -195,6 +247,12 @@ boolean is_special_action(unsigned action) {
 
 void do_go()
 {
+  if(n_cards_queued == 0) {
+    set_both_light_colors(255,0,0);
+    my_tone(750, 6000);
+    return;
+  }
+  
   set_both_light_colors(64,64,0);
   my_tone(300, 1250);
   set_both_light_colors(0,0,0);
@@ -207,23 +265,27 @@ void do_go()
   my_tone(300, 800);
   set_both_light_colors(0,0,0);
   
-  const int ls = 240, rs = 240;
+  static mover forward, backward, left, right;
+  
+  const int ls = 233, rs = 230;
   
   for(unsigned card_idx=0;card_idx<n_cards_queued;++card_idx) {
     set_both_light_colors(200,200,200);
     const unsigned card = cards_queued[card_idx];
     switch(card) {
       case sIdForward:
-        move(ls, rs, 800, 800);
+        forward.move(ls, rs, 800);
         break;
       case sIdBackward:
-        move(-ls, -rs, 800, 800);
+        backward.move(-ls, -rs, 800);
         break;
       case sIdTurnLeft:
-        move(ls, -rs, 300, 300);
+//        move(-ls, rs, 300);
+        left.move(-ls, rs, 335);
         break;
       case sIdTurnRight:
-        move(-ls, rs, 300, 300);
+//        move(ls, -rs, 300);
+        right.move(ls, -rs, 335);
         break;
     }
     set_both_light_colors(0,0,0);
@@ -238,7 +300,7 @@ void do_reset()
   for(float t=0;t<tmax;t+=0.1f) {
     const float n = sin(t * 2 * M_PI);
     const float scale = 1.0f - (t / tmax);
-    my_tone(100, 750 + 750 * (0.5f + 0.5f * n), scale * 100);
+    my_tone(100, 750 + 750 * (0.5f + 0.5f * n), scale * DEFAULT_VOLUME);
     set_both_light_colors(max(0, n*scale*255),0,max(0, -n*scale*255));
   }
 }
@@ -314,3 +376,4 @@ void loop() {
     }
   }
 }
+
