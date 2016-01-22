@@ -115,10 +115,20 @@ void stop_left()
   analogWrite(motor_l_back, 0);
 }
 
-void stop()
-{
-  stop_right();
-  stop_left();
+void stop() {
+  digitalWrite(motor_r_en, HIGH);
+  digitalWrite(motor_r_fwd, HIGH);
+  digitalWrite(motor_r_back, HIGH);
+  digitalWrite(motor_l_fwd, HIGH);
+  digitalWrite(motor_l_back, HIGH);
+}
+
+void coast() {
+  digitalWrite(motor_r_en, LOW);
+  digitalWrite(motor_r_fwd, LOW);
+  digitalWrite(motor_r_back, LOW);
+  digitalWrite(motor_l_fwd, LOW);
+  digitalWrite(motor_l_back, LOW);
 }
 
 
@@ -177,8 +187,6 @@ class PulseCounter
     unsigned long last_pulse_start_;
     unsigned long this_pulse_start_;
 };
-
-const int mtr_r_speed = 255, mtr_l_speed = 240;
 
 
 void set_both_light_colors(uint8_t r, uint8_t g, uint8_t b) {
@@ -243,6 +251,8 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
 {
   digitalWrite(antenna_off_pin, HIGH);
   
+  coast();
+  
   const int mtr_r_speed = 255, mtr_l_speed = 240;
   const unsigned long sm = micros();
   PulseCounter count_left(motor_l_pulse);
@@ -279,12 +289,12 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
       if(iclp > icrp) {
         analogWrite(motor_r_en, mtr_r_speed);  
         if(l_sign >= 0)
-          analogWrite(motor_l_fwd, 170);
+          analogWrite(motor_l_fwd, 0);
         else
-          analogWrite(motor_l_back, 170);
+          analogWrite(motor_l_back, 0);
         
       } else {
-        analogWrite(motor_r_en, 170);  
+        analogWrite(motor_r_en, 0);  
         if(l_sign >= 0)
           analogWrite(motor_l_fwd, mtr_l_speed);
         else
@@ -324,11 +334,11 @@ void do_go()
   my_tone(300, 800);
   set_both_light_colors(0,0,0);
   
-  const int straight_ticks = 340;  
-  const int turn_ticks = 125;
+//  const int straight_ticks = 340;  
+//  const int turn_ticks = 138;
 // R35 
-//  const int straight_ticks = 300;
-//  const int turn_ticks = 115;
+  const int straight_ticks = 400;
+  const int turn_ticks = 150;
   
   for(unsigned card_idx=0;card_idx<n_cards_queued;++card_idx) {
     set_both_light_colors(200,200,200);
@@ -348,8 +358,31 @@ void do_go()
         break;
     }
     set_both_light_colors(0,0,0);
-    delay(300);
+    //delay(300);
+    
+    // Ignore cards queued during action
+    while(rfid_serial.available())
+      rfid_serial.read();
+  
+    for(const unsigned long smillis = millis();(millis() - smillis) < 300;) {
+      if(rfid_serial.available()) {
+        uint32_t card_id = 0;
+        if(4 == rfid_serial.readBytes((char*)&card_id, 4)) {
+          Serial.print("card between actions: ");
+          Serial.println(card_id);
+          const int action_id = get_action_for_card(card_id);
+          if(action_id == sIdReset) {
+            do_reset();
+            goto finished_actions;
+          }
+        }
+      }
+    }
   }
+ finished_actions:
+  // Ignore cards queued during action
+  while(rfid_serial.available())
+    rfid_serial.read();
 }
 
 void do_reset()
