@@ -82,7 +82,7 @@ const uint32_t sNoteColors[] = {
   
 };
 
-const unsigned max_cards = 64;
+const unsigned max_cards = 256;
 unsigned n_cards_queued = 0;
 unsigned cards_queued[max_cards];
 
@@ -268,6 +268,7 @@ void play_note(unsigned action_id, unsigned movement_action = sIdNull) {
   const unsigned long period = sNotePeriods[action_id - sPlayDo];
   set_both_light_colors(sNoteColors[action_id - sPlayDo]);
 
+  my_tone(100, period);
   if(movement_action != sIdNull) {
     switch(movement_action) {
       case sIdForward:
@@ -284,28 +285,98 @@ void play_note(unsigned action_id, unsigned movement_action = sIdNull) {
         break;
     }
   }
-  my_tone(300, period);
+  my_tone(100, period);
   if(movement_action != sIdNull) {
     stop();
   }
+  my_tone(100, period);
 }
 
 unsigned get_action_for_card(uint32_t card)
 {
   switch(card) {
     case 16522752:
+    case 1986208512:
+    case 3349243392:
+    case 246244864:
+    case 246248192:
+    case 3468959232:
+    case 2054252032:
+    case 2054238976:
+    case 1208098560:
+    case 1408704512:
       return sPlayDo;
     case 131276288:
+    case 596076032:
+    case 545744384:
+    case 127279872:
+    case 1718820608:
+    case 2364349952:
+    case 1113858816:
+    case 45704704:
+    case 45704832:
+    case 4175633920:
+    case 364846592:
       return sPlayRe;
     case 1128472832:
+    case 2929925632:
+    case 516038144:
+    case 516034304:
+    case 1438719488:
+    case 3740475008:
+    case 3740474880:
+    case 1400792576:
+    case 81403392:
+    case 1040654080:
       return sPlayMi;
     case 1101602304:
+    case 111484416:
+    case 1467377152:
+    case 329457152:
+    case 502472192:
+    case 502472320:
+    case 3539541504:
+    case 3505987072:
+    case 1692081664:
+    case 1708858880:
+    case 2348424704:
       return sPlayFa;
     case 817372672:
+    case 3303087616:
+    case 3336642048:
+    case 3099139584:
+    case 2340561664:
+    case 3621807616:
+    case 3621807872:
+    case 2071553536:
+    case 2071553792:
+    case 3415500288:
+    case 720445440:
       return sPlaySol;
     case 3164806656:
+    case 3083432448:
+    case 881601024:
+    case 1175480576:
+    case 2971101440:
+    case 1181950720:
+    case 1212817792:
+    case 1212817664:
+    case 652513024:
+    case 652484096:
+    case 1851138048:
+    case 1851138304:
       return sPlayLa;
     case 3574144768:
+    case 2251563264:
+    case 3876003584:
+    case 3859226368:
+    case 1057431296:
+    case 2533760768:
+    case 1155163648:
+    case 1188718080:
+    case 3086753280:
+    case 839458688:
+    case 839458560:
       return sPlaySi;
     case 144449024:
     case 1262626304:
