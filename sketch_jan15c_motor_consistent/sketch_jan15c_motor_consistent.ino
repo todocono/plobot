@@ -1,14 +1,24 @@
 
 const int motor_l_fwd = 14;
+const int motor_l_back = 15;
 
 const int motor_r_en = 13;
+
 const int motor_r_fwd = PB3;
 const int motor_r_back = PB5;
+
+
+const int spk_en_pin = 12;
 
 const int motor_r_pulse = 27;
 const int motor_l_pulse = 28;
 
+const int antenna_off_pin = PB4;
+
 const unsigned long sMinimumTimeBetweenPulses = 200;
+
+// Try to filter any 32khz pwm
+const unsigned long sMinimumPulseLength = 32;
 
 
 void setup() {
@@ -16,7 +26,13 @@ void setup() {
   pinMode(motor_r_en, OUTPUT);
   pinMode(motor_r_fwd, OUTPUT);
   pinMode(motor_r_back, OUTPUT);
+  pinMode(motor_l_back, OUTPUT);
   pinMode(motor_l_pulse, INPUT);
+  
+  pinMode(antenna_off_pin, OUTPUT);
+  
+  pinMode(spk_en_pin, OUTPUT);
+  
   
   Serial.begin(9600);
 
@@ -41,9 +57,8 @@ class PulseCounter
        // Pulse start
        const unsigned long now = micros();
        if((now - last_pulse_start_) > sMinimumTimeBetweenPulses) {
-         ++pulses_;
-         last_pulse_start_ = now;
          last_state_ = LOW;
+         this_pulse_start_ = now;
          /*
          if(pin_ == motor_r_pulse)
            digitalWrite(rfid_pulse, HIGH);
@@ -52,6 +67,12 @@ class PulseCounter
      } else if(state == HIGH && last_state_ == LOW) {
        // Pulse end
        last_state_ = HIGH;
+
+       const unsigned long now = micros();
+       if((now - this_pulse_start_) > sMinimumPulseLength) {
+         ++pulses_;
+         last_pulse_start_ = this_pulse_start_;
+       }
 /*
        if(pin_ == motor_r_pulse)
          digitalWrite(rfid_pulse, LOW);*/
@@ -67,29 +88,50 @@ class PulseCounter
     int last_state_;
     unsigned pulses_;
     unsigned long last_pulse_start_;
+    unsigned long this_pulse_start_;
 };
 
-const int mtr_r_speed = 255, mtr_l_speed = 230;
+const int mtr_r_speed = 255, mtr_l_speed = 240;
 
 
 void stop() {
+  digitalWrite(motor_r_en, HIGH);
+  digitalWrite(motor_r_fwd, HIGH);
+  digitalWrite(motor_r_back, HIGH);
+  digitalWrite(motor_l_fwd, HIGH);
+  digitalWrite(motor_l_back, HIGH);
+  
+  
+}
+
+void coast() {
   digitalWrite(motor_r_en, LOW);
   digitalWrite(motor_r_fwd, LOW);
-  digitalWrite(motor_l_fwd, LOW);
   digitalWrite(motor_r_back, LOW);
+  digitalWrite(motor_l_fwd, LOW);
+  digitalWrite(motor_l_back, LOW);
 }
 
 void loop() {
-  
+  /*
+  digitalWrite(antenna_off_pin, HIGH);
+        do_move(-1,-1,300);    
+        return;
+      s  */
+    
   static int t_idx = 0;
   const boolean dir = ((t_idx++) % 2) == 0;
   
+  coast();
   const unsigned long sm = micros();
   PulseCounter count_left(motor_l_pulse);
   PulseCounter count_right(motor_r_pulse);
 
   long left_stop_t = 0, right_stop_t = 0;
-  const int pulses = dir ? 600 : 139;
+  const int pulses = dir ? 300 : 140;
+  
+  if(dir)
+    return;
 
   if(dir)
     digitalWrite(motor_r_fwd, HIGH);
@@ -102,7 +144,8 @@ void loop() {
   analogWrite(motor_l_fwd, avg_speed);
   
   // Noise at signal start
-  delay(100);
+ //delay(100);
+ delay(50);
 
   Serial.println("-----");
   while(count_left.pulses() < pulses || count_right.pulses() < pulses) {
@@ -135,9 +178,9 @@ void loop() {
         
         if(iclp > icrp) {
           analogWrite(motor_r_en, mtr_r_speed);  
-          analogWrite(motor_l_fwd, 170);
+          analogWrite(motor_l_fwd, 0); // 0
         } else {
-          analogWrite(motor_r_en, 170);  
+          analogWrite(motor_r_en, 0);  // 0
           analogWrite(motor_l_fwd, mtr_l_speed);
         }
         
