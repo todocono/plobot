@@ -31,6 +31,8 @@ const int led_pin = 21;
 
 const int sd_cs = 2; // 4??
 
+static const int sDanceMovePeriodMillis = 100;
+
 float glow_r = 255, glow_g = 255, glow_b = 255;
 
 const int mic_pin = A0;
@@ -42,6 +44,9 @@ enum ActionId{
   sIdForward,
   sIdTurnLeft,
   sIdBackward,
+  sIdDanceMode,
+  sIdWait,
+  sIdForClap,
   sIdReset, 
   sIdGo,
   sColorOrange,
@@ -263,12 +268,8 @@ boolean is_movement_action(unsigned action)
          action == sIdTurnRight;
 }
 
-void play_note(unsigned action_id, unsigned movement_action = sIdNull) {
-  action_id = max(sPlayDo, min(sPlaySi, action_id));
-  const unsigned long period = sNotePeriods[action_id - sPlayDo];
-  set_both_light_colors(sNoteColors[action_id - sPlayDo]);
-
-  my_tone(100, period);
+void start_dance_move(unsigned movement_action)
+{
   if(movement_action != sIdNull) {
     switch(movement_action) {
       case sIdForward:
@@ -285,10 +286,24 @@ void play_note(unsigned action_id, unsigned movement_action = sIdNull) {
         break;
     }
   }
-  my_tone(100, period);
+}
+
+void end_dance_move(unsigned movement_action)
+{
   if(movement_action != sIdNull) {
     stop();
   }
+}
+
+void play_note(unsigned action_id, unsigned movement_action = sIdNull) {
+  action_id = max(sPlayDo, min(sPlaySi, action_id));
+  const unsigned long period = sNotePeriods[action_id - sPlayDo];
+  set_both_light_colors(sNoteColors[action_id - sPlayDo]);
+
+  my_tone(100, period);
+  start_dance_move(movement_action);
+  my_tone(sDanceMovePeriodMillis, period);
+  end_dance_move(movement_action);
   my_tone(100, period);
 }
 
@@ -390,6 +405,8 @@ unsigned get_action_for_card(uint32_t card)
     case 2917033472:
     case 1514284544:
       return sIdBackward;
+    case 1547838976:
+      return sIdDanceMode;
     case 2455276800:
     case 2772771584:
       return sIdReset;  
@@ -411,25 +428,20 @@ unsigned get_action_for_card(uint32_t card)
     case 3154059264:
     case 181149184:
       return sColorBlue;
+    case 3761736960:
+      return sIdWait;
+    case 1866606080:
+      return sIdForClap;
     default:
       return 0;
   }
 } 
-
-boolean in_red_mode() {
-  return glow_r == 255.0f &&
-         glow_g == 0.0f &&
-         glow_b == 0.0f;
-}
 
 boolean is_note(unsigned action) {
   return action >= sPlayDo && action <= sPlaySi;
 }
 
 boolean is_special_action(unsigned action) {
-  if(in_red_mode() && is_note(action))
-    return true;
-  
   return action == sIdGo || action == sIdReset ||
           action == sColorOrange ||
           action == sColorRed ||
@@ -439,7 +451,7 @@ boolean is_special_action(unsigned action) {
 }
 
 void do_move(const int l_sign, const int r_sign, const int pulses)
-{
+{  
   digitalWrite(antenna_off_pin, HIGH);
   
   coast();
@@ -505,13 +517,30 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
   digitalWrite(antenna_off_pin, LOW);
 }
 
+void do_wait(int modifier_action)
+{
+  set_both_light_colors(0,0,0);
+  switch(modifier_action) {
+   case sIdForClap: {
+     for(const unsigned long sm = millis();(millis() - sm) < 10000L && analogRead(mic_pin) < 800;);
+     break;
+   }
+   default:
+    delay(500);
+    break;
+  }
+}
+
 void do_go()
-{ 
+{
   if(n_cards_queued == 0) {
     set_both_light_colors(255,0,0);
     my_tone(750, 6000);
     return;
   }
+
+  // Modes set-up  
+  dance_mode = false;
   
   set_both_light_colors(64,64,0);
   my_tone(300, 1250);
@@ -534,29 +563,49 @@ void do_go()
   for(unsigned card_idx=0;card_idx<n_cards_queued;++card_idx) {
     set_both_light_colors(200,200,200);
     const unsigned card = cards_queued[card_idx];
-    switch(card) {
-      case sIdForward:
-        do_move(1,1,straight_ticks);
-        break;
-      case sIdBackward:
-        do_move(-1,-1,straight_ticks);
-        break;
-      case sIdTurnLeft:
-        do_move(-1,1,turn_ticks);
-        break;
-      case sIdTurnRight:
-        do_move(1,-1,turn_ticks);
-        break;
-      default:
-      {
-        if(is_note(card)) {
-          int next_movement_action = sIdNull;
-          if(card_idx < (n_cards_queued-1) && is_movement_action(cards_queued[card_idx+1])) {
-            next_movement_action = cards_queued[++card_idx];
+    if(dance_mode && is_movement_action(card)) {
+      start_dance_move(card);
+      delay(sDanceMovePeriodMillis);
+      end_dance_move(card);
+    } else {
+      switch(card) {
+        case sIdForward:
+          do_move(1,1,straight_ticks);
+          break;
+        case sIdBackward:
+          do_move(-1,-1,straight_ticks);
+          break;
+        case sIdTurnLeft:
+          do_move(-1,1,turn_ticks);
+          break;
+        case sIdTurnRight:
+          do_move(1,-1,turn_ticks);
+          break;
+        case sIdDanceMode:
+          dance_mode = !dance_mode;
+          if(dance_mode)
+            dance_mode_jingle();
+          break;
+        case sIdWait:
+        {
+          int modifier_action = sIdNull;
+          if(card_idx < (n_cards_queued-1) && is_action_modifier(cards_queued[card_idx+1])) {
+            modifier_action = cards_queued[++card_idx];
           }
-          play_note(card, next_movement_action);
+          do_wait(modifier_action);
+          break;
         }
-        break;
+        default:
+        {
+          if(is_note(card)) {
+            int next_movement_action = sIdNull;
+            if(card_idx < (n_cards_queued-1) && is_movement_action(cards_queued[card_idx+1])) {
+              next_movement_action = cards_queued[++card_idx];
+            }
+            play_note(card, next_movement_action);
+          }
+          break;
+        }
       }
     }
     set_both_light_colors(0,0,0);
@@ -566,7 +615,7 @@ void do_go()
     while(rfid_serial.available())
       rfid_serial.read();
   
-    const unsigned long pause_millis = dance_mode ? 100 : 300;
+    const unsigned long pause_millis = dance_mode ? 200 : 300;
   
     for(const unsigned long smillis = millis();(millis() - smillis) < pause_millis;) {
       if(rfid_serial.available()) {
@@ -587,6 +636,8 @@ void do_go()
   // Ignore cards queued during action
   while(rfid_serial.available())
     rfid_serial.read();
+    
+  dance_mode = false;
 }
 
 void do_reset()
@@ -601,10 +652,36 @@ void do_reset()
   }
 }
 
+void dance_mode_jingle()
+{
+  play_note(sPlayFa, sIdTurnRight);
+  delay(50);
+  play_note(sPlayRe, sIdTurnLeft);
+}
+
+void scan_success_jingle()
+{
+  // Indicate success
+  for(int i=0;i<4;++i) {
+    my_tone(100, 2500 - 500 * i);
+    set_both_light_colors(0,25 + 75 * i,0);
+  }
+}
+
+boolean is_action_modifier(int action_id)
+{
+  return action_id == sIdForClap;
+}
+
+boolean is_modifiable_action(int action_id)
+{
+  return action_id == sIdWait;
+}
+
 void loop() {
   
   // Glow
-  static const unsigned long glow_period_micros = 2000000L;
+  const unsigned long glow_period_micros = dance_mode ? 200000L : 2000000L;
   static unsigned long last_glow_micros = micros();
   static unsigned long glow_t_micros = 0;
   
@@ -622,27 +699,16 @@ void loop() {
   
   // "Blink" the antenna when waiting for commands, to avoid interfering with
   // nearby Plobots
-  if(!in_red_mode())
-  {
-    static unsigned long last_antenna_millis = millis();
-    const unsigned long now = millis();
-    static boolean antenna_mode = false;
-    if((now - last_antenna_millis) >= 225) {
-       last_antenna_millis = now;
-       antenna_mode = (random(3) != 0);
-       digitalWrite(antenna_off_pin, antenna_mode ? HIGH : LOW);
-    }
-    if((now - last_antenna_millis) > 75) {
-       digitalWrite(antenna_off_pin, antenna_mode ? LOW : HIGH);
-    }
+  static unsigned long last_antenna_millis = millis();
+  const unsigned long now = millis();
+  static boolean antenna_mode = false;
+  if((now - last_antenna_millis) >= 225) {
+     last_antenna_millis = now;
+     antenna_mode = (random(3) != 0);
+     digitalWrite(antenna_off_pin, antenna_mode ? HIGH : LOW);
   }
-  
-  // Listen for clap
-  if(dance_mode) {
-    if(analogRead(mic_pin) > 1000) {
-      do_go();
-      return;
-    }
+  if((now - last_antenna_millis) > 75) {
+     digitalWrite(antenna_off_pin, antenna_mode ? LOW : HIGH);
   }
   
   // Card scanning
@@ -676,32 +742,26 @@ void loop() {
               do_reset();
               break;
             case sColorOrange:
-              dance_mode = false;
               glow_r = 255.0f;
               glow_g = 165.0f;
               glow_b = 0.0f;
               break;
             case sColorRed:
-              digitalWrite(antenna_off_pin, LOW);
-              dance_mode = false;
               glow_r = 255.0f;
               glow_g = 0.0f;
               glow_b = 0.0f;
               break;
             case sColorGreen:
-              dance_mode = true;
               glow_r = 0.0f;
               glow_g = 255.0f;
               glow_b = 0.0f;
               break;
             case sColorPurple:
-              dance_mode = true;
               glow_r = 128.0f;
               glow_g = 0.0f;
               glow_b = 128.0f;
               break;
             case sColorBlue:
-              dance_mode = true;
               glow_r = 0.0f;
               glow_g = 0.0f;
               glow_b = 255.0f;
@@ -716,6 +776,10 @@ void loop() {
           if(n_cards_queued == max_cards) {
             show_error();
           }
+          else if(is_action_modifier(action_id) && 
+                  (n_cards_queued == 0 || !is_modifiable_action(cards_queued[n_cards_queued-1]))) {
+            show_error();
+          }
           else
           {
             // Record card
@@ -723,12 +787,14 @@ void loop() {
   
             if(is_note(action_id)) {
               play_note(action_id);
+            } else if(action_id == sIdDanceMode) {
+              dance_mode = !dance_mode;
+              if(dance_mode)
+                dance_mode_jingle();
+              else
+                scan_success_jingle();
             } else {
-              // Indicate success
-              for(int i=0;i<4;++i) {
-                my_tone(100, 2500 - 500 * i);
-                set_both_light_colors(0,25 + 75 * i,0);
-              }
+              scan_success_jingle();
             }
           }
         }
