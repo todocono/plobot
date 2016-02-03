@@ -37,6 +37,7 @@ float glow_r = 255, glow_g = 255, glow_b = 255;
 
 const int mic_pin = A0;
 boolean dance_mode = false;
+int notes_in_row = 0;
 
 enum ActionId{
   sIdNull=0,
@@ -522,7 +523,12 @@ void do_wait(int modifier_action)
   set_both_light_colors(0,0,0);
   switch(modifier_action) {
    case sIdForClap: {
-     for(const unsigned long sm = millis();(millis() - sm) < 10000L && analogRead(mic_pin) < 800;);
+     const unsigned long glow_start = millis();
+     for(const unsigned long sm = millis();(millis() - sm) < 10000L && analogRead(mic_pin) < 800;) {
+       const float t = float(millis() - glow_start) / 750.0f;
+       const int intensity = int(255.0f * (0.5f + 0.5f * (sin(t * 2.0f * M_PI))));
+       set_both_light_colors(intensity, intensity, intensity);
+     }
      break;
    }
    default:
@@ -531,17 +537,8 @@ void do_wait(int modifier_action)
   }
 }
 
-void do_go()
+void go_start()
 {
-  if(n_cards_queued == 0) {
-    set_both_light_colors(255,0,0);
-    my_tone(750, 6000);
-    return;
-  }
-
-  // Modes set-up  
-  dance_mode = false;
-  
   set_both_light_colors(64,64,0);
   my_tone(300, 1250);
   set_both_light_colors(0,0,0);
@@ -553,7 +550,24 @@ void do_go()
   set_both_light_colors(0,255,0);
   my_tone(300, 800);
   set_both_light_colors(0,0,0);
+
+  // Modes set-up  
+  dance_mode = false;
   
+  // Measure detection
+  notes_in_row = 0;
+}
+
+void do_go()
+{
+  if(n_cards_queued == 0) {
+    set_both_light_colors(255,0,0);
+    my_tone(750, 6000);
+    return;
+  }
+
+  go_start();
+
 //  const int straight_ticks = 340;  
 //  const int turn_ticks = 138;
 // R35 
@@ -599,7 +613,7 @@ void do_go()
         {
           if(is_note(card)) {
             int next_movement_action = sIdNull;
-            if(card_idx < (n_cards_queued-1) && is_movement_action(cards_queued[card_idx+1])) {
+            if(dance_mode && card_idx < (n_cards_queued-1) && is_movement_action(cards_queued[card_idx+1])) {
               next_movement_action = cards_queued[++card_idx];
             }
             play_note(card, next_movement_action);
@@ -614,10 +628,30 @@ void do_go()
     // Ignore cards queued during action
     while(rfid_serial.available())
       rfid_serial.read();
-  
-    const unsigned long pause_millis = dance_mode ? 200 : 300;
-  
-    for(const unsigned long smillis = millis();(millis() - smillis) < pause_millis;) {
+
+    unsigned long pause_millis = 300;
+
+    if(is_note(card))
+      ++notes_in_row;
+    else
+      notes_in_row = 0;
+    
+    if(notes_in_row > 0) {
+      if(notes_in_row % 4 == 0)
+        pause_millis = 300;
+      else
+        pause_millis = 100;
+    }
+      
+    boolean pause_mode = false;
+    unsigned long glow_start = millis();
+
+    for(const unsigned long smillis = millis();pause_mode || ((millis() - smillis) < pause_millis);) {
+      if(pause_mode) {
+        const float t = float(millis() - glow_start) / 750.0f;
+        const int intensity = int(255.0f * (0.5f + 0.5f * (sin(t * 2.0f * M_PI))));
+        set_both_light_colors(intensity, intensity, intensity);
+      }
       if(rfid_serial.available()) {
         uint32_t card_id = 0;
         if(4 == rfid_serial.readBytes((char*)&card_id, 4)) {
@@ -627,6 +661,19 @@ void do_go()
           if(action_id == sIdReset) {
             do_reset();
             goto finished_actions;
+          } else if(action_id == sIdWait) {
+            if(!pause_mode) {
+              // TODO: Jingle?
+              pause_mode = true;
+              glow_start = millis();
+            } else {
+              pause_mode = false;
+              set_both_light_colors(0,0,0);
+            }
+          } else if(action_id == sIdGo) {
+            card_idx = ~0;  // Loop will increment
+            go_start();
+            break;
           }
         }
       }
@@ -654,9 +701,9 @@ void do_reset()
 
 void dance_mode_jingle()
 {
-  play_note(sPlayFa, sIdTurnRight);
+  play_note(sPlayFa, sIdNull);
   delay(50);
-  play_note(sPlayRe, sIdTurnLeft);
+  play_note(sPlayRe, sIdNull);
 }
 
 void scan_success_jingle()
