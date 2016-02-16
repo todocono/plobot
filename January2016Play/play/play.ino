@@ -44,6 +44,7 @@ enum ActionId{
   sIdTurnRight,
   sIdForward,
   sIdTurnLeft,
+  sIdRepeat,
   sIdBackward,
   sIdDanceMode,
   sIdWait,
@@ -433,6 +434,8 @@ unsigned get_action_for_card(uint32_t card)
       return sIdWait;
     case 1866606080:
       return sIdForClap;
+    case 1480730112:
+      return sIdRepeat;
     default:
       return 0;
   }
@@ -521,9 +524,9 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
 void do_wait(int modifier_action)
 {
   set_both_light_colors(0,0,0);
+  const unsigned long glow_start = millis();
   switch(modifier_action) {
    case sIdForClap: {
-     const unsigned long glow_start = millis();
      for(const unsigned long sm = millis();(millis() - sm) < 10000L && analogRead(mic_pin) < 800;) {
        const float t = float(millis() - glow_start) / 750.0f;
        const int intensity = int(255.0f * (0.5f + 0.5f * (sin(t * 2.0f * M_PI))));
@@ -531,9 +534,14 @@ void do_wait(int modifier_action)
      }
      break;
    }
-   default:
-    delay(500);
+   default: {
+     for(const unsigned long sm = millis();(millis() - sm) < 500L;) {
+       const float t = float(millis() - glow_start) / 750.0f;
+       const int intensity = int(255.0f * (0.5f + 0.5f * (sin(t * 2.0f * M_PI))));
+       set_both_light_colors(intensity, intensity, intensity);
+     }
     break;
+   }
   }
 }
 
@@ -597,8 +605,9 @@ void do_go()
           break;
         case sIdDanceMode:
           dance_mode = !dance_mode;
-          if(dance_mode)
-            dance_mode_jingle();
+          break;
+        case sIdRepeat:
+          // TODO: Repeat mode
           break;
         case sIdWait:
         {
@@ -690,6 +699,7 @@ void do_go()
 void do_reset()
 {
   n_cards_queued = 0;
+  dance_mode = false;
   const float tmax = 2.75f;
   for(float t=0;t<tmax;t+=0.1f) {
     const float n = sin(t * 2 * M_PI);
@@ -831,7 +841,9 @@ void loop() {
           {
             // Record card
             cards_queued[n_cards_queued++] = action_id;
-  
+ 
+           // TODO: Repeat mode
+           
             if(is_note(action_id)) {
               play_note(action_id);
             } else if(action_id == sIdDanceMode) {
