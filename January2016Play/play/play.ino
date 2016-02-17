@@ -37,6 +37,8 @@ float glow_r = 255, glow_g = 255, glow_b = 255;
 
 const int mic_pin = A0;
 boolean dance_mode = false;
+boolean repeat_mode = false;
+int repeat_seq_start = -1, repeat_seq_end = -1;
 int notes_in_row = 0;
 
 enum ActionId{
@@ -561,6 +563,7 @@ void go_start()
 
   // Modes set-up  
   dance_mode = false;
+  repeat_mode = false;
   
   // Measure detection
   notes_in_row = 0;
@@ -582,9 +585,26 @@ void do_go()
   const int straight_ticks = 400;
   const int turn_ticks = 150;
   
+  int jumped_from_idx = -1;
+  
+  boolean saved_dance_mode = false;
+  
   for(unsigned card_idx=0;card_idx<n_cards_queued;++card_idx) {
-    set_both_light_colors(200,200,200);
     const unsigned card = cards_queued[card_idx];
+    if(card_idx >= repeat_seq_start && 
+       ((repeat_seq_end < 0) || (card_idx <= repeat_seq_end))) {
+      if(!repeat_mode)
+        continue;
+      if(card_idx == repeat_seq_start)
+        continue;
+      if(card_idx == repeat_seq_end) {
+        card_idx = jumped_from_idx;  // Increment will move to the next card
+        repeat_mode = false;
+        dance_mode = saved_dance_mode;
+        continue;
+      }
+    }
+    set_both_light_colors(200,200,200);
     if(dance_mode && is_movement_action(card)) {
       start_dance_move(card);
       delay(sDanceMovePeriodMillis);
@@ -607,7 +627,13 @@ void do_go()
           dance_mode = !dance_mode;
           break;
         case sIdRepeat:
-          // TODO: Repeat mode
+          Serial.print("Hit repeat card, jumping to ");
+          Serial.println(repeat_seq_start);
+          jumped_from_idx = card_idx;
+          card_idx = repeat_seq_start;
+          repeat_mode = true;
+          saved_dance_mode = dance_mode;
+          dance_mode = false;
           break;
         case sIdWait:
         {
@@ -692,14 +718,14 @@ void do_go()
   // Ignore cards queued during action
   while(rfid_serial.available())
     rfid_serial.read();
-    
-  dance_mode = false;
-}
+ }
 
 void do_reset()
 {
   n_cards_queued = 0;
   dance_mode = false;
+  repeat_mode = false;
+  repeat_seq_start = repeat_seq_end = -1;
   const float tmax = 2.75f;
   for(float t=0;t<tmax;t+=0.1f) {
     const float n = sin(t * 2 * M_PI);
@@ -725,6 +751,21 @@ void scan_success_jingle()
   }
 }
 
+void subroutine_jingle(boolean at_end)
+{
+  if(at_end) {
+    set_both_light_colors(100,100,0);
+    my_tone(300, 1000);
+    set_both_light_colors(70,70,0);
+    my_tone(300, 1300);
+  } else {
+    set_both_light_colors(70,70,0);
+    my_tone(300, 1300);
+    set_both_light_colors(100,100,0);
+    my_tone(300, 1000);
+  }
+}
+
 boolean is_action_modifier(int action_id)
 {
   return action_id == sIdForClap;
@@ -736,9 +777,10 @@ boolean is_modifiable_action(int action_id)
 }
 
 void loop() {
+  static boolean saved_dance_mode = false;
   
   // Glow
-  const unsigned long glow_period_micros = dance_mode ? 200000L : 2000000L;
+  const unsigned long glow_period_micros = (dance_mode || repeat_mode) ? 200000L : 2000000L;
   static unsigned long last_glow_micros = micros();
   static unsigned long glow_t_micros = 0;
   
@@ -749,8 +791,13 @@ void loop() {
     glow_t_micros += glow_t_micros_offset;
     last_glow_micros = m;
     float glow_t = float(glow_t_micros) / glow_period_micros;
+    
+    float glow_n = 0.5f - 0.5f*cos(glow_t * 2.0f * M_PI);
+    if(repeat_mode && !dance_mode) {
+      if(fmod(glow_t, 4.0f) >= 2.0f)
+        glow_n = 0;
+    }
 
-    float glow_n = 0.5f + 0.5f*sin(glow_t * 2.0f * M_PI);
     set_both_light_colors(glow_n * glow_r, glow_n * glow_g, glow_n * glow_b);
   }
   
@@ -832,18 +879,15 @@ void loop() {
         } else {
           if(n_cards_queued == max_cards) {
             show_error();
-          }
-          else if(is_action_modifier(action_id) && 
+          } else if(is_action_modifier(action_id) && 
                   (n_cards_queued == 0 || !is_modifiable_action(cards_queued[n_cards_queued-1]))) {
             show_error();
           }
           else
           {
             // Record card
-            cards_queued[n_cards_queued++] = action_id;
- 
-           // TODO: Repeat mode
-           
+           cards_queued[n_cards_queued++] = action_id;
+            
             if(is_note(action_id)) {
               play_note(action_id);
             } else if(action_id == sIdDanceMode) {
@@ -852,6 +896,28 @@ void loop() {
                 dance_mode_jingle();
               else
                 scan_success_jingle();
+            } else if(action_id == sIdRepeat) {
+              if(repeat_seq_end < 0) {
+                subroutine_jingle(repeat_mode);
+                if(!repeat_mode) {
+                  repeat_mode = true;
+                  repeat_seq_start = n_cards_queued-1;
+                  saved_dance_mode = dance_mode;
+                  dance_mode = false;
+                  Serial.print("Sequence started at ");
+                } else {
+                  repeat_mode = false;
+                  repeat_seq_end = n_cards_queued-1;
+                  dance_mode = saved_dance_mode;
+                  
+                  Serial.print("Sequence ended ");
+                  Serial.print(repeat_seq_start);
+                  Serial.print(" ");
+                  Serial.println(repeat_seq_end);
+                }
+              } else {
+                scan_success_jingle();
+              }
             } else {
               scan_success_jingle();
             }
