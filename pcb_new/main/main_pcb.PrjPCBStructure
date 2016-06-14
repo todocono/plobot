@@ -1,5 +1,1 @@
-Record=SheetSymbol|SourceDocument=main_pcb.SchDoc|Designator=MTR_L|SchDesignator=MTR_L|FileName=motor.SchDoc|SymbolType=Normal|RawFileName=motor.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
-Record=SheetSymbol|SourceDocument=main_pcb.SchDoc|Designator=MTR_R|SchDesignator=MTR_R|FileName=motor.SchDoc|SymbolType=Normal|RawFileName=motor.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
-Record=SheetSymbol|SourceDocument=main_pcb.SchDoc|Designator=QMIC|SchDesignator=QMIC|FileName=mic.SchDoc|SymbolType=Normal|RawFileName=mic.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
-Record=SheetSymbol|SourceDocument=main_pcb.SchDoc|Designator=QRFID|SchDesignator=QRFID|FileName=rfid.SchDoc|SymbolType=Normal|RawFileName=rfid.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
 Record=TopLevelDocument|FileName=main_pcb.SchDoc
