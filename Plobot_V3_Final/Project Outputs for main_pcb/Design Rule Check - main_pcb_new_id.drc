@@ -1,0 +1,55 @@
+Protel Design System Design Rule Check
+PCB File : C:\My Files\Projects\Plobot\Plobot_Repo\pcb_new\Plobot_V3\main_pcb_new_id.PcbDoc
+Date     : 6/23/2016
+Time     : 6:00:10 PM
+
+Processing Rule : Width Constraint (Min=8mil) (Max=1000mil) (Preferred=10mil) (All)
+Rule Violations :0
+
+Processing Rule : Short-Circuit Constraint (Allowed=No) (All),(All)
+Rule Violations :0
+
+Processing Rule : Un-Routed Net Constraint ( (All) )
+Rule Violations :0
+
+Processing Rule : Clearance Constraint (Gap=8mil) (All),(All)
+Rule Violations :0
+
+Processing Rule : Power Plane Connect Rule(Relief Connect )(Expansion=20mil) (Conductor Width=10mil) (Air Gap=10mil) (Entries=4) (All)
+Rule Violations :0
+
+Processing Rule : Height Constraint (Min=0mil) (Max=1000mil) (Prefered=500mil) (All)
+Rule Violations :0
+
+Processing Rule : Hole Size Constraint (Min=1mil) (Max=150mil) (All)
+Rule Violations :0
+
+Processing Rule : Hole To Hole Clearance (Gap=10mil) (All),(All)
+Rule Violations :0
+
+Processing Rule : Minimum Solder Mask Sliver (Gap=5mil) (All),(All)
+Rule Violations :0
+
+Processing Rule : Silk To Solder Mask (Clearance=1mil) (IsPad),(All)
+Rule Violations :0
+
+Processing Rule : Silk to Silk (Clearance=1mil) (All),(All)
+   Violation between Silk To Silk Clearance Constraint: (Collision < 1mil) Between Text "R8" (10660mil,6250mil) on Top Overlay And Text "Rodolfo Cossovich
+Sean Purser-Haskell
+Ivan Tchekashkin
+23 JUN 2016" (10085mil,6265mil) on Top Overlay Silk Text to Silk Clearance [0mil]
+   Violation between Silk To Silk Clearance Constraint: (Collision < 1mil) Between Text "R11" (10810mil,6250mil) on Top Overlay And Text "Rodolfo Cossovich
+Sean Purser-Haskell
+Ivan Tchekashkin
+23 JUN 2016" (10085mil,6265mil) on Top Overlay Silk Text to Silk Clearance [0mil]
+Rule Violations :2
+
+Processing Rule : Net Antennae (Tolerance=0mil) (All)
+Rule Violations :0
+
+Processing Rule : Room main_pcb (Bounding Region = (11735mil, 5015mil, 11930mil, 5255mil) (Disabled)(InComponentClass('main_pcb'))
+Rule Violations :0
+
+
+Violations Detected : 2
+Time Elapsed        : 00:00:04
