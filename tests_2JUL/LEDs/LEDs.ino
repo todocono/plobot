@@ -2,6 +2,17 @@
 
 #define PIN 21
 
+
+const int pin_spk_en = 15;
+const int pin_spk_dir = 23;
+
+
+const int motor_l_en = 13;
+const int motor_r_en = 12;
+
+const int motor_l_dir = 24;
+const int motor_r_dir = 25;
+
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -17,6 +28,15 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(5, PIN, NEO_GRB + NEO_KHZ400);
 // on a live circuit...if you must, connect GND first.
 
 void setup() {
+  
+  pinMode(pin_spk_dir, OUTPUT);
+  pinMode(pin_spk_en, OUTPUT);
+
+  pinMode(motor_l_en, OUTPUT);
+  pinMode(motor_r_en, OUTPUT);
+  pinMode(motor_l_dir, OUTPUT);
+  pinMode(motor_r_dir, OUTPUT);
+  
   pinMode(PIN, OUTPUT);
 
   strip.begin();
