@@ -1,7 +1,7 @@
 Comment,Description,Designator,Footprint,LibRef,Quantity
 ,,,,,
 ON/OFF,,B1,KGPS22F03,Component_1,1
-100nF,Capacitor,"C1, C3, C6, C7, C8, C12, C13, C14, C15, C16, C18, C19, C21, C26, C27, C28, C29, C32, C34, C35, C37, C38, C46, C47, C48",CAPC1608N,Cap,25
+100nF,Capacitor,"C1, C3, C6, C7, C8, C12, C13, C14, C15, C16, C18, C19, C21, C26, C27, C28, C29, C32, C34, C35, C37, C38, C48",CAPC1608N,Cap,25
 18pF,Capacitor,"C2, C4",CAPC1608N,Cap,2
 10 uF,Capacitor,"C5, C11",CAPC3216N,Cap_2,2
 15pF,Capacitor,"C9, C10, C22, C45",CAPC1608N,CAP,4
