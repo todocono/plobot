@@ -42,7 +42,7 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance
 
 void setup() {
-	Serial.begin(9600);		// Initialize serial communications with the PC
+	Serial.begin(57600);		// Initialize serial communications with the PC
 	while (!Serial);		// Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
 	SPI.begin();			// Init SPI bus
 	mfrc522.PCD_Init();		// Init MFRC522
@@ -61,6 +61,12 @@ void loop() {
 		return;
 	}
 
-	// Dump debug info about the card; PICC_HaltA() is automatically called
-	mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+  uint32_t raw_id = 0;
+  if(mfrc522.uid.size != sizeof(uint32_t)) {
+    Serial.println("ERROR: Card has wrong UID size");
+  } else {
+    memcpy(&raw_id, mfrc522.uid.uidByte, sizeof(uint32_t));
+  
+    Serial.println(raw_id);
+  }
 }
