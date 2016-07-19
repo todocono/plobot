@@ -9,12 +9,10 @@
 #include "sound.h"
 #include "jingles.h"
 #include "motors.h"
+#include "arms.h"
 
-const int ultra_power = 22;
 const int trigPin = 19;
 const int echoPin = 20;
-
-int servos[2] = {3,4};
 
 IdleGlow idle_glow(2000000L, 255, 255, 255);
 const unsigned max_cards = 200;
@@ -27,18 +25,12 @@ const int straight_ticks = 600;
 const int turn_ticks = 650;
 
 void setup() {
-  
   init_sound();
   init_motors();
   
-  pinMode(ultra_power, OUTPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  digitalWrite(ultra_power, HIGH);
-  
-  pinMode(servos[0], OUTPUT);
-  pinMode(servos[1], OUTPUT);
-  
+    
   TCCR1B = 0x01;   // Timer 1: PWM 9 & 10 @ 32 kHz
   TCCR2B = 0x01;   // Timer 2: PWM 3 & 11 @ 32 kHz
   
@@ -49,6 +41,9 @@ void setup() {
   SPI.begin();			// Init SPI bus
   
   init_cards();
+  init_arms();
+  
+  set_arms(0, 400);
 }
 
 void do_reset() {
@@ -64,6 +59,8 @@ void do_go() {
   
   go_jingle();
   
+  int arms_pos = 50;
+  
   for(unsigned card_idx=0;card_idx<n_cards_queued;++card_idx) {
     const CardId card = cards_queued[card_idx];
     switch(card) {
@@ -78,6 +75,10 @@ void do_go() {
         break;
       case kCardRight:
         do_move(1,-1,turn_ticks);
+        break;
+      case kCardArms:
+        set_arms(arms_pos, 400);
+        arms_pos = arms_pos ? 0 : 50;
         break;
     }
     

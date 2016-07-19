@@ -16,13 +16,13 @@ void loop()
   for(pos = 0; pos <= 180; pos += 1) // goes from 0 degrees to 180 degrees 
   {                                  // in steps of 1 degree 
     servos[0].write(pos);              // tell servo to go to position in variable 'pos' 
-    servos[1].write(pos);              // tell servo to go to position in variable 'pos' 
+    servos[1].write(180 - pos);              // tell servo to go to position in variable 'pos' 
     delay(3);                       // waits 15ms for the servo to reach the position 
   } 
   for(pos = 180; pos>=0; pos-=1)     // goes from 180 degrees to 0 degrees 
   {                                
      servos[0].write(pos);              // tell servo to go to position in variable 'pos' 
-    servos[1].write(pos);              // tell servo to go to position in variable 'pos' 
+    servos[1].write(180 - pos);              // tell servo to go to position in variable 'pos' 
    delay(3);                       // waits 15ms for the servo to reach the position 
   } 
 } 
