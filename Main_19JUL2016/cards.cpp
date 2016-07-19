@@ -28,8 +28,26 @@ CardId read_one_card() {
   memcpy(&raw_id, mfrc522.uid.uidByte, sizeof(CardId));
 
   switch(raw_id) {
-    case 22142:
-      return kCardGo;
+    case 49486:
+       return kCardRed;
+    case 26606:
+       return kCardGreen;
+    case 30430:
+       return kCardBlue;
+    case 49150:
+       return kCardGo;
+    case 46334:
+       return kCardReset;
+    case 19982:
+      return kCardForward;
+    case 15166:
+      return kCardBackward;
+    case 51438:
+      return kCardLeft;
+    case 56846:
+      return kCardRight;
+    case 4766:
+      return kCardArms;
     default:
       Serial.print("Unknown card ID received: ");
       Serial.println(raw_id);
@@ -37,10 +55,22 @@ CardId read_one_card() {
   }
 
   // One card at a time
+  flush_cards();
+  
+  return kCardNull;
+}
+
+void flush_cards() {
   while(mfrc522.PICC_IsNewCardPresent()) {
     mfrc522.PICC_ReadCardSerial();
   }
-  
-  return kCardNull;
+}
+
+boolean is_key_card(CardId card) {
+  return card == kCardGo || 
+         card == kCardReset || 
+         card == kCardRed ||
+         card == kCardGreen ||
+         card == kCardBlue;
 }
 

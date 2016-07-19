@@ -45,4 +45,12 @@ void IdleGlow::do_glow() {
     set_glow(glow_n * glow_r, glow_n * glow_g, glow_n * glow_b);
 }
 
+void IdleGlow::set(byte glow_r, 
+                   byte glow_g, 
+                   byte glow_b) {
+    this->glow_r = glow_r;
+    this->glow_g = glow_g;
+    this->glow_b = glow_b;
+}
+
 

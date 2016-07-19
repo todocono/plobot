@@ -16,12 +16,11 @@ enum CardId {
   kCardRed,
   kCardGreen,
   kCardBlue,
-  kCardTone,
-  kCardVolume,
-  kCardFuncA,
 };
 
 void init_cards();
 CardId read_one_card();
+void flush_cards();
+boolean is_key_card(CardId card);
 
 #endif//CARDS_H

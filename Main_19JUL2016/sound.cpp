@@ -12,18 +12,17 @@ void init_sound() {
 }
 
 void chip_tone(unsigned long for_millis, unsigned long period_micros, int volume) {
-  analogWrite(pin_spk_en, volume);
   for(const unsigned long sm=millis();(millis() - sm) < for_millis;) {
     digitalWrite(pin_spk_dir, HIGH);
-    digitalWrite(pin_spk_en, HIGH);
+    analogWrite(pin_spk_en, volume);
     delayMicroseconds(period_micros / 2);
-    digitalWrite(pin_spk_en, LOW);
+    analogWrite(pin_spk_en, 0);
     delayMicroseconds(10);
 
     digitalWrite(pin_spk_dir, LOW);
-    digitalWrite(pin_spk_en, HIGH);
+    analogWrite(pin_spk_en, volume);
     delayMicroseconds(period_micros / 2);
-    digitalWrite(pin_spk_en, LOW);
+    analogWrite(pin_spk_en, 0);
     delayMicroseconds(10);
   }
 }
