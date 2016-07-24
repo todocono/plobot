@@ -48,7 +48,7 @@ boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned lon
       
     for(unsigned int idx=0;idx<256;++idx) {   
       // TODO: Tune precisely for new 8Mhz configuration   
-      _delay_loop_1(140);
+      _delay_loop_1(120);
       uint8_t sample = block_mem[idx];
       digitalWrite(pin_spk_dir, (sample & 0b10000000) ? HIGH : LOW);
       uint8_t set = (sample & 0b10000000) ? (sample & 0b01111111) : (127 - sample & 0b01111111);
