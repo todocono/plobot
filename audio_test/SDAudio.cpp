@@ -40,6 +40,7 @@ boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned lon
   uint8_t block_mem[256];
   unsigned long last_micros = micros();
   for(;block < to;++block) {
+    OCR2A = 0;
     if(!flash.readPage(block, (uint8_t*)&block_mem[0])) {
       ret = false;
       break;
@@ -50,9 +51,9 @@ boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned lon
       _delay_loop_1(140);
       uint8_t sample = block_mem[idx];
       digitalWrite(pin_spk_dir, (sample & 0b10000000) ? HIGH : LOW);
-      
+      uint8_t set = (sample & 0b10000000) ? (sample & 0b01111111) : (127 - sample & 0b01111111);
       // TODO: Volume level
-      OCR2A = (sample & 0b01111111) << 1;
+      OCR2A = set << 1;
     }
   }
   return ret;
