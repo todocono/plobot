@@ -12,7 +12,7 @@ void Setup();
 //
 // Streams 8 bit, unsigned, mono, 16 ksamples/second audio in 512 byte (32ms) increments. 
 // Streams seamlessly, interleaving SD reads with PWM register writes.
-boolean StreamBlocks(Sd2Card &card, unsigned long fromBlock, unsigned long count);
+boolean StreamBlocks(SPIFlash &flash, unsigned long fromBlock, unsigned long count);
 
 }
 

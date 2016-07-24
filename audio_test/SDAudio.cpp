@@ -1,15 +1,18 @@
 
-#include <SPI.h>
-#include <SD.h>
+#include<SPIFlash.h>
+#include<SPI.h>
 
 #include "SDAudio.h"
 
-const int sSpeakerPin = 15;
+const int pin_spk_en = 15;
+const int pin_spk_dir = 23;
 
 void SDAudio::Setup()
 {
-  pinMode(sSpeakerPin, OUTPUT);
-  // Off: Coupling cap
+  pinMode(pin_spk_dir, OUTPUT);
+  pinMode(pin_spk_en, OUTPUT);
+
+  // Off: don't burn speaker
   OCR2A = 0;
   TCCR2B = (TCCR2B & ~(_BV(CS12) | _BV(CS11))) | _BV(CS10);
   
@@ -29,47 +32,28 @@ void SDAudio::Setup()
   TCCR2B = (TCCR2B & ~(_BV(CS12) | _BV(CS11))) | _BV(CS10);
 }
 
-boolean SDAudio::StreamBlocks(Sd2Card &card, unsigned long block, unsigned long count)
+boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned long count)
 {
-  const uint8_t start_partial = card.partialBlockRead();
-  card.partialBlockRead(1);
-
   boolean ret = true;
-  // Charge coupling cap softly
-  for(int i=0;i<128;++i) {
-    OCR2A = i;
-    delayMicroseconds(1000);
-  }
   
   const unsigned long to = block + count;
-  uint8_t block_mem[512];
+  uint8_t block_mem[256];
   unsigned long last_micros = micros();
   for(;block < to;++block) {
-    for(unsigned int idx=0;idx<512;++idx) {
-      uint8_t sample = 128;
-      if(!card.readData(block, idx, 1, &sample)) {
-        ret = false;
-        goto done;
-      }
+    if(!flash.readPage(block, (uint8_t*)&block_mem[0])) {
+      ret = false;
+      break;
+    }
       
-      // 16khz. The above logic takes varying time, so this value was found experimentally
-      // so that it sounds right (averages out)
-      _delay_loop_1(255);
-      _delay_loop_1(5);
+    for(unsigned int idx=0;idx<256;++idx) {   
+      // TODO: Tune precisely for new 8Mhz configuration   
+      _delay_loop_1(140);
+      uint8_t sample = block_mem[idx];
+      digitalWrite(pin_spk_dir, (sample & 0b10000000) ? HIGH : LOW);
       
-      OCR2A = sample;
+      // TODO: Volume level
+      OCR2A = (sample & 0b01111111) << 1;
     }
   }
-  
-    // Discharge coupling cap softly
-  for(int i=128;i>=0;--i) {
-    OCR2A = i;
-    delayMicroseconds(1000);
-  }
-  
-  
- done:
-  card.readEnd();
-  card.partialBlockRead(start_partial);
   return ret;
 }

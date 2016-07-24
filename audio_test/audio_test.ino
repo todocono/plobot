@@ -1,25 +1,26 @@
 
-#include <SPI.h>
-#include <SD.h>
+#include<SPIFlash.h>
+#include<SPI.h>
 #include "SDAudio.h"
 
-Sd2Card card;
+#define cs 18
+#define RFID_NSS_PIN          14         // Configurable, see typical pin layout above
 
-const int chipSelect = 4;
+SPIFlash flash(cs);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(57600);
   while (!Serial);
   
   SDAudio::Setup();
 
-  Serial.print("\nInitializing SD card...");
-  if (!card.init(SPI_HALF_SPEED, chipSelect)) {
-    return;
-  }
+  flash.begin();
 }
 
 void loop(void) {
-  SDAudio::StreamBlocks(card, 0, 5000);
+  Serial.println("Streaming..");
+  if(!SDAudio::StreamBlocks(flash, 0, 5000)) {
+    Serial.println("Error streaming blocks");
+  }
   delay(750);
 }
