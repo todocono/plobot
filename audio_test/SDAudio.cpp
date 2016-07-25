@@ -34,27 +34,31 @@ void SDAudio::Setup()
 
 boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned long count)
 {
+  noInterrupts();
   boolean ret = true;
   
-  const unsigned long to = block + count;
   uint8_t block_mem[256];
+  memset(&block_mem[0], 0, sizeof(block_mem));
+
   unsigned long last_micros = micros();
-  for(;block < to;++block) {
-    OCR2A = 0;
-    if(!flash.readPage(block, (uint8_t*)&block_mem[0])) {
-      ret = false;
-      break;
-    }
+  
+  flash._beginRead(flash._prepRead((uint16_t)block));
+  for(uint32_t i=0;i<(uint32_t(count) * uint32_t(256L));++i) {
+      // 16khz
+//      _delay_loop_1(120);
+      // 32khz
+      _delay_loop_1(30);
       
-    for(unsigned int idx=0;idx<256;++idx) {   
-      // TODO: Tune precisely for new 8Mhz configuration   
-      _delay_loop_1(120);
-      uint8_t sample = block_mem[idx];
-      digitalWrite(pin_spk_dir, (sample & 0b10000000) ? HIGH : LOW);
-      uint8_t set = (sample & 0b10000000) ? (sample & 0b01111111) : (127 - sample & 0b01111111);
-      // TODO: Volume level
-      OCR2A = set << 1;
-    }
+      uint8_t sample = flash._readNextByte(true);
+  
+      int setI = int(sample) - 128;
+      digitalWrite(pin_spk_dir, (setI < 0) ? HIGH : LOW);
+      
+      // TODO: 1 bit of wasted precision
+      OCR2A = min(255, abs(setI) << 1);
   }
+  OCR2A = 0;
+  flash._endProcess();
+  interrupts();
   return ret;
 }

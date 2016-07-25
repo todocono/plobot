@@ -2,7 +2,7 @@
 #include<SPIFlash.h>
 #include<SPI.h>
 
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 const int motor_l_en = 13;
 const int motor_r_en = 12;
@@ -62,7 +62,7 @@ void loop() {
         if(!flash.eraseBlock64K(1+pageIndex, 0)) {
 #if DEBUG_PRINT
           Serial.print("Error on eraseBlock ");
-          Serial.print(page.pageIndex);
+          Serial.print(1+pageIndex);
           Serial.println();
 #endif
         }
@@ -70,7 +70,7 @@ void loop() {
       if(!flash.writePage(1+pageIndex, (uint8_t*)read_buffer)) {    
 #if DEBUG_PRINT
         Serial.print("2 Page write error (");
-        Serial.print(page.pageIndex);
+        Serial.print(1+pageIndex);
         Serial.println(") ");
 #endif
       }
