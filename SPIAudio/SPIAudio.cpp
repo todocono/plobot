@@ -2,7 +2,7 @@
 #include<SPIFlash.h>
 #include<SPI.h>
 
-#include "SDAudio.h"
+#include "SPIAudio.h"
 
 const int pin_spk_en = 15;
 const int pin_spk_dir = 23;
@@ -11,7 +11,7 @@ const int mic = 31;
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
 
-void SDAudio::Setup()
+void SPIAudio::Setup()
 {
   pinMode(pin_spk_dir, OUTPUT);
   pinMode(pin_spk_en, OUTPUT);
@@ -43,7 +43,7 @@ void SDAudio::Setup()
   
 }
 
-boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned long count, AudioRate rate)
+boolean SPIAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned long count, AudioRate rate)
 {
   uint8_t rateDelay = 0;
   
@@ -78,7 +78,7 @@ boolean SDAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned lon
   return true;
 }
 
-boolean SDAudio::RecordBlocks(SPIFlash &flash, unsigned long block, unsigned long count, AudioRate rate)
+boolean SPIAudio::RecordBlocks(SPIFlash &flash, unsigned long block, unsigned long count, AudioRate rate)
 {
   uint8_t rateDelay = 0;
   

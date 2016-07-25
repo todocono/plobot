@@ -1,7 +1,7 @@
 
-#include<SPIFlash.h>
 #include<SPI.h>
-#include "SDAudio.h"
+#include<SPIFlash.h>
+#include "SPIAudio.h"
 
 #define cs 18
 #define RFID_NSS_PIN          14         // Configurable, see typical pin layout above
@@ -21,7 +21,7 @@ void setup() {
   
   Serial.println("Starting...");
   
-  SDAudio::Setup();
+  SPIAudio::Setup();
 
   flash.begin();
 
@@ -33,7 +33,7 @@ void setup() {
 
 void loop(void) {
   Serial.println("Streaming..");
-  if(!SDAudio::StreamBlocks(flash, 1, 5000)) {
+  if(!SPIAudio::StreamBlocks(flash, 1, 5000, SPIAudio::AudioRate_32khz)) {
     Serial.println("Error streaming blocks");
   }
   delay(750);

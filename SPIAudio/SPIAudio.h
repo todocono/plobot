@@ -1,8 +1,10 @@
 
-#ifndef SD_AUDIO_H
-#define SD_AUDIO_H
+#ifndef SPI_AUDIO_H
+#define SPI_AUDIO_H
 
-namespace SDAudio {
+#include <SPIFlash.h>
+
+namespace SPIAudio {
 
 void Setup();
 
@@ -21,5 +23,5 @@ boolean RecordBlocks(SPIFlash &flash, unsigned long fromBlock, unsigned long cou
 }
 
 
-#endif//SD_AUDIO_H
+#endif//SPI_AUDIO_H
 
