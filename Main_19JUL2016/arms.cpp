@@ -12,9 +12,10 @@ void init_arms() {
 
 // pos is -50 to 50
 // duration is in millis
-void set_arms(int both_pos, int duration) {
-  const unsigned long left_pulse_duration = 1000L + 10L * max(0, min(100, 50 + both_pos));
-  const unsigned long right_pulse_duration = 1000L + 10L * max(0, min(100, 50 - both_pos));
+void set_arms(float left_pos_norm, float right_pos_norm, int duration) {
+  const unsigned long min_val = 750L, max_val = 2500L;
+  const unsigned long left_pulse_duration = min_val + (unsigned long)((max_val - min_val) * max(0.0f, min(1.0f, left_pos_norm)));
+  const unsigned long right_pulse_duration = min_val + (unsigned long)((max_val - min_val) * max(0.0f, min(1.0f, right_pos_norm)));
   const unsigned long left_dead_time = 10000L - left_pulse_duration;
   const unsigned long right_dead_time = 10000L - right_pulse_duration;
   for(int cycles = max(2, duration / 10);cycles;--cycles) {

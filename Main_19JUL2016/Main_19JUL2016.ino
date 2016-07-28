@@ -51,7 +51,7 @@ void setup() {
   init_cards();
   init_arms();
   
-  set_arms(-150, 400);
+  set_arms(0.0f, 1.0f, 400);
 }
 
 void do_reset() {
@@ -80,7 +80,7 @@ void execute_sequence(CardSequence const&sequence) {
   Serial.print(" ");
   Serial.println(sequence.count());
   
-  int arms_pos = 50;
+  static float arm_pos = 0.0f;
   boolean paused = false;
   unsigned long paused_start_ms = 0;
   
@@ -103,8 +103,8 @@ void execute_sequence(CardSequence const&sequence) {
           do_move(1,-1,turn_ticks);
           break;
         case kCardLift:
-          set_arms(arms_pos, 400);
-          arms_pos = arms_pos ? 0 : 50;
+          set_arms(arm_pos, 1.0f - arm_pos, 400);
+          arm_pos = (arm_pos == 0.0f) ? 0.65f : 0.0f;
           break;
         case kCardPause:
           do_pause_glow(1000);
