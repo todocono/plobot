@@ -152,10 +152,39 @@ boolean is_key_card(CardId card) {
          card == kCardYellow ||
          card == kCardPink ||
          card == kCardPurple ||
-         card == kCardBlue;
+         card == kCardBlue ||
+         card == kCardStore;
 }
 
 boolean is_note_card(CardId card) {
   return card >= kCardMusicDo && card <= kCardMusicSi;
 }
+
+ CardSequence::CardSequence() {
+   clear();
+ }
+ 
+ void CardSequence::clear() {
+   n_cards_queued = 0;
+   memset(&cards_queued[0], 0, sizeof(cards_queued));
+ }
+ boolean CardSequence::queue(CardId card) {
+   if(n_cards_queued == max_cards)
+     return false;
+   cards_queued[n_cards_queued++] = card;
+   return true;
+ }
+ CardId CardSequence::atIndex(int idx)const {
+   if(idx < 0 || idx >= n_cards_queued)
+     return kCardNull;
+   return cards_queued[idx];
+ }
+ int CardSequence::count()const {
+   return n_cards_queued;
+ }
+ 
+boolean CardSequence::empty()const {
+  return n_cards_queued == 0;
+}
+
 

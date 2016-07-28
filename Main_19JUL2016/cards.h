@@ -45,4 +45,21 @@ void flush_cards();
 boolean is_key_card(CardId card);
 boolean is_note_card(CardId card);
 
+const unsigned max_cards = 200;
+
+class CardSequence {
+ public:
+   CardSequence();
+   
+   void clear();
+   boolean queue(CardId card);
+   CardId atIndex(int idx)const;
+   int count()const;
+   
+   boolean empty()const;
+ private:
+  int n_cards_queued;
+  CardId cards_queued[max_cards];
+};
+
 #endif//CARDS_H

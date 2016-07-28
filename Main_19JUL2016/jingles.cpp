@@ -80,7 +80,7 @@ const int sNotePeriods[] = {
 };
 
 const uint32_t sNoteColors[] = {
-  get_color(255,0,0),
+  get_color(255,64,64),
   get_color(255,128,0),
   get_color(255,255,0),
   get_color(0,255,0),
@@ -123,6 +123,21 @@ void card_scan_jingle(CardId card) {
     default:
       scan_success_jingle();
       break;
+  }
+}
+
+void subroutine_jingle(boolean at_end)
+{
+  if(at_end) {
+    set_glow(100,100,0);
+    chip_tone(300, 1000);
+    set_glow(70,70,0);
+    chip_tone(300, 1300);
+  } else {
+    set_glow(70,70,0);
+    chip_tone(300, 1300);
+    set_glow(100,100,0);
+    chip_tone(300, 1000);
   }
 }
 

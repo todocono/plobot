@@ -24,11 +24,11 @@ const int trigPin = 19;
 const int echoPin = 20;
 
 IdleGlow idle_glow(2000000L, 255, 255, 255);
-const unsigned max_cards = 200;
-unsigned n_cards_queued = 0;
-CardId cards_queued[max_cards];
-
 const int between_cards_default_pause = 300;
+
+CardSequence main_sequence, stored_sequence;
+
+CardSequence *current_sequence = &main_sequence;
 
 const int straight_ticks = 800;
 const int turn_ticks = 650;
@@ -55,7 +55,8 @@ void setup() {
 }
 
 void do_reset() {
-    n_cards_queued = 0;
+    main_sequence.clear();
+    stored_sequence.clear();
     card_scan_jingle(kCardReset);
 }
 
@@ -73,23 +74,21 @@ void do_pause_glow(int pause_millis) {
   }
 }
 
-void do_go() {
-  if(n_cards_queued == 0) {
-    error_jingle();
-    return;
-  }
-  
-  card_scan_jingle(kCardStart);
+void execute_sequence(CardSequence const&sequence) {  
+  Serial.print(">>>> execute_sequence ");
+  Serial.print((unsigned long)&sequence, HEX);
+  Serial.print(" ");
+  Serial.println(sequence.count());
   
   int arms_pos = 50;
   boolean paused = false;
   unsigned long paused_start_ms = 0;
   
-  for(unsigned card_idx=0;card_idx<n_cards_queued;) {
+  for(int card_idx=0;card_idx<sequence.count();) {
     unsigned long pause_millis = between_cards_default_pause;
     
     if(!paused) {
-      const CardId card = cards_queued[card_idx];
+      const CardId card = sequence.atIndex(card_idx);
       switch(card) {
         case kCardForward:
           do_move(1,1,straight_ticks);
@@ -110,10 +109,14 @@ void do_go() {
         case kCardPause:
           do_pause_glow(1000);
           break;
+        case kCardRepeat:
+          if(&sequence != &stored_sequence)
+            execute_sequence(stored_sequence);
+          break;
         default: {
           if(is_note_card(card)) {
             play_note(card);
-            pause_millis = 150;
+            pause_millis = 100;
           }
           break;
         }
@@ -129,7 +132,7 @@ void do_go() {
       CardId scanned = read_one_card();
       if(scanned == kCardReset) {
         do_reset();
-        goto finished_actions;
+        return;
       } else if(scanned == kCardStart) {
         card_idx = 0;  // Loop will increment
         paused = false;
@@ -142,6 +145,19 @@ void do_go() {
       }
     }
   }
+  Serial.print("<<<< execute_sequence ");
+  Serial.println(sequence.count());
+}
+
+void do_go() {
+  if(!main_sequence.empty()) {
+    card_scan_jingle(kCardStart);
+  } else {
+    error_jingle();
+    return;
+  }
+  
+  execute_sequence(main_sequence);
   
  finished_actions:
   flush_cards();
@@ -177,13 +193,20 @@ void loop() {
         do_go();
       } else if(scanned == kCardReset) {
         do_reset();
+      } else if(scanned == kCardStore) {
+        if(current_sequence == &main_sequence) {
+          stored_sequence.clear();
+          current_sequence = &stored_sequence;
+          subroutine_jingle(false);
+        } else if(current_sequence == &stored_sequence) {
+          current_sequence = &main_sequence;
+          subroutine_jingle(true);
+        }
       }
     } else {
-        if(n_cards_queued == max_cards) {
+        if(!current_sequence->queue(scanned)) {
           error_jingle();
-        }
-        else {
-           cards_queued[n_cards_queued++] = scanned;
+        } else {
            card_scan_jingle(scanned);
         }
     }
