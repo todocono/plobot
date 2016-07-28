@@ -48,16 +48,22 @@ void go_jingle() {
 void pause_jingle(boolean pausing) {
   set_glow(0,0,0);
   if(pausing) {
+    set_glow(255,255,255);
     chip_tone(150, 800);
     delay(150);
+    set_glow(200,200,200);
     chip_tone(250, 1000);
     delay(200);
+    set_glow(128,128,128);
     chip_tone(400, 2000);
   } else {
+    set_glow(128,128,128);
     chip_tone(400, 2000);
     delay(200);
+    set_glow(200,200,200);
     chip_tone(250, 1000);
     delay(150);
+    set_glow(255,255,255);
     chip_tone(150, 800);
     delay(150);
   }

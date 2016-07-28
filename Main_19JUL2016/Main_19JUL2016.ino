@@ -59,6 +59,20 @@ void do_reset() {
     card_scan_jingle(kCardReset);
 }
 
+void set_pause_glow(unsigned long paused_start_ms) {
+    const float t_since_paused = float(millis() - paused_start_ms) / 1000.0f;
+    const float norm_t = t_since_paused / 0.25f;
+    const float norm_level = 0.5f * (1.0f + sin(norm_t * 2 * M_PI));
+    uint8_t level = uint8_t(128 + 128 * norm_level);
+    set_glow(level,level,level);
+}
+
+void do_pause_glow(int pause_millis) {
+  for(const unsigned long paused_start_ms = millis();(millis() - paused_start_ms) < pause_millis;) {
+    set_pause_glow(paused_start_ms);
+  }
+}
+
 void do_go() {
   if(n_cards_queued == 0) {
     error_jingle();
@@ -93,6 +107,9 @@ void do_go() {
           set_arms(arms_pos, 400);
           arms_pos = arms_pos ? 0 : 50;
           break;
+        case kCardPause:
+          do_pause_glow(1000);
+          break;
         default: {
           if(is_note_card(card)) {
             play_note(card);
@@ -104,11 +121,7 @@ void do_go() {
       ++card_idx;
       set_glow(0,0,0);
     } else {
-      const float t_since_paused = float(millis() - paused_start_ms) / 1000.0f;
-      const float norm_t = t_since_paused / 0.25f;
-      const float norm_level = 0.5f * (1.0f + sin(norm_t * 2 * M_PI));
-      uint8_t level = uint8_t(128 + 128 * norm_level);
-      set_glow(level,level,level);
+      set_pause_glow(paused_start_ms);
       pause_millis = 1;
     }   
     
