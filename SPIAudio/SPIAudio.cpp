@@ -99,11 +99,12 @@ boolean SPIAudio::RecordBlocks(SPIFlash &flash, unsigned long block, unsigned lo
 
   noInterrupts();
   long avg_val_accum = 0L;
-  for(int i=0;i<100;++i) {
+  const int n_samples_center = 300;
+  for(int i=0;i<n_samples_center;++i) {
     avg_val_accum += analogRead(mic);
     _delay_loop_1(rateDelay);
   }
-  int avg_val = avg_val_accum / 100L;
+  const int avg_val = avg_val_accum / n_samples_center;
 
   for(unsigned long i=0;i<count;++i) {
     uint32_t address = flash._prepWrite((uint16_t)(block + i));
@@ -111,7 +112,7 @@ boolean SPIAudio::RecordBlocks(SPIFlash &flash, unsigned long block, unsigned lo
     for(uint16_t idx=0;idx<256;++idx) {
       const int raw_val = analogRead(mic);
       const int val = raw_val - avg_val;
-      uint8_t sample = max(0, min(255, 0x80 + val));
+      uint8_t sample = max(0, min(255, 0x80 + val / 2));
       flash._writeNextByte(sample, true);
       
       _delay_loop_1(rateDelay);
