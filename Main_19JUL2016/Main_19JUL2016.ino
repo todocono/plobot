@@ -75,11 +75,6 @@ void do_pause_glow(int pause_millis) {
 }
 
 void execute_sequence(CardSequence const&sequence) {  
-  Serial.print(">>>> execute_sequence ");
-  Serial.print((unsigned long)&sequence, HEX);
-  Serial.print(" ");
-  Serial.println(sequence.count());
-  
   static float arm_pos = 0.0f;
   boolean paused = false;
   unsigned long paused_start_ms = 0;
@@ -145,8 +140,6 @@ void execute_sequence(CardSequence const&sequence) {
       }
     }
   }
-  Serial.print("<<<< execute_sequence ");
-  Serial.println(sequence.count());
 }
 
 void do_go() {

@@ -82,7 +82,7 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
     const int avg_pulses = (count_left.pulses() + count_right.pulses()) / 2;
     const int triangle = (avg_pulses > pulses / 2) ? (pulses - avg_pulses) : pulses;
 
-    const int mtr_speed = min(180, triangle * 4);
+    const int mtr_speed = max(0, min(120, triangle * 2));
 
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
