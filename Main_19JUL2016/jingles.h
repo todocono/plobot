@@ -2,10 +2,12 @@
 #ifndef JINGLES_H
 #define JINGLES_H
 
-void scan_success_jingle();
+#include "cards.h"
+
 void error_jingle();
-void go_jingle();
-void reset_jingle();
+void card_scan_jingle(CardId card);
+void play_note(CardId action_id);
+void pause_jingle(boolean pausing);
 
 #endif//JINGLES_H
 

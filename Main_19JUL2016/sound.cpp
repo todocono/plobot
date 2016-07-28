@@ -46,8 +46,10 @@ void chip_tone(unsigned long for_millis, unsigned long period_micros, int volume
     OCR2A = 0;
     delayMicroseconds(10);
   }
-  OCR2A = volume;
+  OCR2A = 0;
 }
+
+
 
 
 

@@ -24,23 +24,23 @@ void setup() {
 
 void loop() {
   digitalWrite(motor_l_dir, LOW);
-  analogWrite(motor_l_en, 45);
+  analogWrite(motor_l_en, 255);
   delay(750);
   analogWrite(motor_l_en, 0);
   delay(300);
   digitalWrite(motor_l_dir, HIGH);
-  analogWrite(motor_l_en, 45);
+  analogWrite(motor_l_en, 255);
   delay(750);
   analogWrite(motor_l_en, 0);
   delay(300);
   
   digitalWrite(motor_r_dir, HIGH);
-  analogWrite(motor_r_en, 45);
+  analogWrite(motor_r_en, 255);
   delay(750);
   analogWrite(motor_r_en, 0);
   delay(300);
   digitalWrite(motor_r_dir, LOW);
-  analogWrite(motor_r_en, 45);
+  analogWrite(motor_r_en, 255);
   delay(750);
   analogWrite(motor_r_en, 0);
   delay(300);

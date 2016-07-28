@@ -7,6 +7,7 @@
 void init_lights();
 void set_glow(byte r, byte g, byte b);
 void set_glow(uint32_t c);
+uint32_t get_color(byte r, byte g, byte b);
 
 class IdleGlow {
 public:

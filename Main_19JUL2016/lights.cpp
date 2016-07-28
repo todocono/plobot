@@ -5,6 +5,10 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(5, 21, NEO_GRB + NEO_KHZ400);
 
+uint32_t get_color(byte r, byte g, byte b) {
+  return strip.Color(r,g,b);
+}
+
 void init_lights() {
   strip.begin();
   set_glow(0);

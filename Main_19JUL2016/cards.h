@@ -6,21 +6,43 @@
 
 enum CardId {
   kCardNull = 0,
-  kCardGo,
+  kCardStart,
   kCardReset,
   kCardForward,
-  kCardBackward,
   kCardLeft,
   kCardRight,
-  kCardArms,
+  kCardBackward,
+  kCardLift,
+  kCardListen,
+  kCardSee,
+  kCardFeel,
+  kCardRepeat,
+  kCardStore,
+  kCardRandom,
+  kCardTeach,
+  kCardBoost,
+  kCardPause,
+  kCardSound,
   kCardRed,
   kCardGreen,
+  kCardOrange,
+  kCardYellow,
+  kCardPink,
+  kCardPurple,
   kCardBlue,
+  kCardMusicDo,
+  kCardMusicRe,
+  kCardMusicMi,
+  kCardMusicFa,
+  kCardMusicSol,
+  kCardMusicLa,
+  kCardMusicSi,
 };
 
 void init_cards();
 CardId read_one_card();
 void flush_cards();
 boolean is_key_card(CardId card);
+boolean is_note_card(CardId card);
 
 #endif//CARDS_H

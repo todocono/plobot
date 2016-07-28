@@ -1,6 +1,5 @@
 
 const int dled = 30;
-const int ultra_power = 22;
 const int trigPin = 19;
 const int echoPin = 20;
 
@@ -17,26 +16,23 @@ const int motor_r_dir = 25;
 
 void setup() {
   pinMode(dled, OUTPUT);
-  pinMode(ultra_power, OUTPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  digitalWrite(ultra_power, HIGH);
 
   pinMode(pin_spk_dir, OUTPUT);
   pinMode(pin_spk_en, OUTPUT);
+  digitalWrite(pin_spk_en, LOW);
 
   pinMode(motor_l_en, OUTPUT);
   pinMode(motor_r_en, OUTPUT);
   pinMode(motor_l_dir, OUTPUT);
   pinMode(motor_r_dir, OUTPUT);
   
-  Serial.begin(9600);
+  Serial.begin(57600);
   
 }
 
 void loop() {
-  digitalWrite(ultra_power, HIGH);
-  delay(500);
   long duration, distance;
   digitalWrite(trigPin, LOW);  // Added this line
   delayMicroseconds(2); // Added this line
@@ -52,6 +48,5 @@ void loop() {
     Serial.print(distance);
     Serial.println(" cm");
   }
- // digitalWrite(ultra_power, LOW);
-  delay(500);
+  delay(50);
 }

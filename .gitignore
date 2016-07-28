@@ -24,3 +24,13 @@ pcb_new/main/Project Outputs for main_pcb/main_pcb.BOM
 *.PrjPCBStructure
 
 cheap_electronics_test_18JUL/Project Outputs for cheap/Design Rule Check - test.html
+
+Main_19JUL2016/SPIAudio.h
+
+Main_19JUL2016/SPIAudio.cpp
+
+audio_test/SPIAudio.cpp
+
+audio_test/SPIAudio.h
+
+upload_audio/upload_stream
