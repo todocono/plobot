@@ -31,7 +31,7 @@ CardSequence main_sequence, stored_sequence;
 CardSequence *current_sequence = &main_sequence;
 
 const int straight_ticks = 800;
-const int turn_ticks = 650;
+const int turn_ticks = 400;
 
 void setup() {
   init_sound();

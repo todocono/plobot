@@ -1,4 +1,5 @@
 
+
 #include "motors.h"
 #include <Arduino.h>
 
@@ -59,7 +60,7 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
 {
 //  coast();
   
-  const int default_mtr_speed = 180;
+  const int min_power = 80, max_power = 140;
   const unsigned long sm = micros();
   PulseCounter count_left(motor_l_pulse);
   PulseCounter count_right(motor_r_pulse);
@@ -78,32 +79,52 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
     count_left.count();
     count_right.count();
     
-    
     const int avg_pulses = (count_left.pulses() + count_right.pulses()) / 2;
-    const int triangle = (avg_pulses > pulses / 2) ? (pulses - avg_pulses) : pulses;
+    const int triangle = (avg_pulses > pulses / 2) ? (pulses - avg_pulses) : avg_pulses;
 
-    const int mtr_speed = max(0, min(120, triangle * 2));
+    const int mtr_speed = max(min_power, min(max_power, triangle));
 
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
     
     if(abs(int(iclp) - int(icrp)) > 1) {
       if(iclp > icrp) {
-        analogWrite(motor_r_en, 0);   
+        analogWrite(motor_r_en, min_power);   
         analogWrite(motor_l_en, mtr_speed);
       } else {
         analogWrite(motor_r_en, mtr_speed);   
-        analogWrite(motor_l_en, 0);
+        analogWrite(motor_l_en, min_power);
       }
       
     } else {
       analogWrite(motor_r_en, mtr_speed);   
       analogWrite(motor_l_en, mtr_speed);   
-    }
-    
+    } 
   }
   analogWrite(motor_r_en, 0);
   analogWrite(motor_l_en, 0);
+
+  // Wait for the ticks to stop. 
+  int last_left = count_left.pulses(), last_right = count_right.pulses();
+  unsigned long last_count_millis = millis();
+  
+  while((millis() - last_count_millis) < 200) {
+    if(count_left.pulses() != last_left || count_right.pulses() != last_right) {
+      last_left = count_left.pulses();
+      last_right = count_right.pulses();
+      last_count_millis = millis();
+    }
+  }
+  
+  // Count overshoot. 
+  Serial.print("Final counts: left(");
+  Serial.print(count_left.pulses());
+  Serial.print(") right (");
+  Serial.print(count_right.pulses());
+  Serial.print(")");
+  Serial.println();
+  
+  // TODO: Use this value
 }
 
 
