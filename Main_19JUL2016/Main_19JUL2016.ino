@@ -75,7 +75,7 @@ void do_pause_glow(int pause_millis) {
 }
 
 void execute_sequence(CardSequence const&sequence) {  
-  static float arm_pos = 0.0f;
+  static float arm_pos = 0.65f;
   boolean paused = false;
   unsigned long paused_start_ms = 0;
   
