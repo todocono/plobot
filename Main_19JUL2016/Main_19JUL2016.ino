@@ -34,8 +34,8 @@ const int straight_ticks = 800;
 const int turn_ticks = 400;
 
 void setup() {
-  init_sound();
   init_motors();
+  init_sound();
   
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);

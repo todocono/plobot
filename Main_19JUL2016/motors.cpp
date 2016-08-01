@@ -14,6 +14,8 @@ const int motor_r_dir = 25;
 
 
 void init_motors() {
+  TCCR1B = TCCR1B & 0b11111000 | 0x01;
+
   pinMode(motor_l_pulse, INPUT);
   pinMode(motor_r_pulse, INPUT);
   
@@ -60,7 +62,7 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
 {
 //  coast();
   
-  const int min_power = 80, max_power = 140;
+  const int min_power = 180, max_power = 255;
   const unsigned long sm = micros();
   PulseCounter count_left(motor_l_pulse);
   PulseCounter count_right(motor_r_pulse);
@@ -82,7 +84,7 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
     const int avg_pulses = (count_left.pulses() + count_right.pulses()) / 2;
     const int triangle = (avg_pulses > pulses / 2) ? (pulses - avg_pulses) : avg_pulses;
 
-    const int mtr_speed = max(min_power, min(max_power, triangle));
+    const int mtr_speed = max(min_power, min(max_power, min_power + triangle));
 
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
@@ -109,6 +111,8 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
   unsigned long last_count_millis = millis();
   
   while((millis() - last_count_millis) < 200) {
+    count_left.count();
+    count_right.count();
     if(count_left.pulses() != last_left || count_right.pulses() != last_right) {
       last_left = count_left.pulses();
       last_right = count_right.pulses();
