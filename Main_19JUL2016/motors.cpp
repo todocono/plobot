@@ -62,7 +62,8 @@ void do_move(const int l_sign, const int r_sign, const int pulses)
 {
 //  coast();
   
-  const int min_power = 180, max_power = 255;
+  // Max should be <255 for bootstrap
+  const int min_power = 180, max_power = 250;
   const unsigned long sm = micros();
   PulseCounter count_left(motor_l_pulse);
   PulseCounter count_right(motor_r_pulse);
