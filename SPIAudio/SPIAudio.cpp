@@ -69,8 +69,9 @@ boolean SPIAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned lo
       int setI = int(sample) - 128;
       digitalWrite(pin_spk_dir, (setI < 0) ? HIGH : LOW);
       
+      // 250 to protect bridge (bootstrap)
       // TODO: 1 bit of wasted precision
-      OCR2A = min(255, abs(setI) << 1);
+      OCR2A = min(250, abs(setI) << 1);
   }
   OCR2A = 0;
   flash._endProcess();
