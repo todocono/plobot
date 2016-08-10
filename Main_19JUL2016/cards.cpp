@@ -198,6 +198,18 @@ boolean is_key_card(CardId card) {
          card == kCardStore;
 }
 
+boolean card_sets_condition(CardId card) {
+  switch(card) {
+    case kCardSee:
+    case kCardListen:
+    case kCardFeel:
+    case kCardRandom:
+    case kCardTeach:
+      return true;
+  }
+  return false;
+}
+
 boolean is_note_card(CardId card) {
   return card >= kCardMusicDo && card <= kCardMusicSi;
 }

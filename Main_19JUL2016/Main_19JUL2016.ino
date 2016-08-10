@@ -57,6 +57,8 @@ void setup() {
   init_cards();
   init_arms();
   
+  randomSeed(SPIAudio::mic_read());
+  
   set_arms(0.0f, 1.0f, 400);
 }
 
@@ -85,61 +87,77 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
   boolean paused = false;
   unsigned long paused_start_ms = 0;
   
+  // If condition is -1, the action is not taken. 
+  int condition = 0;
+  
   for(int card_idx=0;card_idx<sequence.count();) {
+    Serial.print("Condition IS ");
+    Serial.println(condition);
     unsigned long pause_millis = between_cards_default_pause;
     
+    const CardId card = sequence.atIndex(card_idx);
     if(!paused) {
-      const CardId card = sequence.atIndex(card_idx);
-      switch(card) {
-        case kCardForward:
-          move_straight(straight_ticks);
-          break;
-        case kCardBackward:
-          move_straight(-straight_ticks);
-          break;
-        case kCardLeft:
-          turn(-90);
-          break;
-        case kCardRight:
-          turn(90);
-          break;
-        case kCardLift:
-          set_arms(arm_pos, 1.0f - arm_pos, 400);
-          arm_pos = (arm_pos == 0.0f) ? 0.65f : 0.0f;
-          break;
-        case kCardPause:
-          do_pause_glow(1000);
-          break;
-        case kCardRepeat:
-          // TODO: Infinite recursion
-          if(&sequence != &stored_sequence) {
-            if(depth <= sStackDepthLimit) {
-              execute_sequence(stored_sequence, depth+1);
+      if(condition != -1) {
+        switch(card) {
+          case kCardForward:
+            move_straight(straight_ticks);
+            break;
+          case kCardBackward:
+            move_straight(-straight_ticks);
+            break;
+          case kCardLeft:
+            turn(-90);
+            break;
+          case kCardRight:
+            turn(90);
+            break;
+          case kCardLift:
+            set_arms(arm_pos, 1.0f - arm_pos, 400);
+            arm_pos = (arm_pos == 0.0f) ? 0.65f : 0.0f;
+            break;
+          case kCardPause:
+            do_pause_glow(1000);
+            break;
+          case kCardRandom:
+            condition = (random(0,2) == 0) ? -1 : 1;
+      Serial.print("Condition set to ");
+      Serial.println(condition);
+            break;
+          case kCardRepeat:
+            // TODO: Infinite recursion
+            if(&sequence != &stored_sequence && condition == 0) {
+              if(depth <= sStackDepthLimit) {
+                execute_sequence(stored_sequence, depth+1);
+              } else {
+                // Refuse to recurse too deeply
+                error_jingle();
+              }
             } else {
-              // Refuse to recurse too deeply
-              error_jingle();
+              // Support infinite recursion without stack overflow
+              // NOTE: THIS MUST BE UNCONDITIONAL
+              card_idx = -1;
+              condition = 0;
             }
-          } else {
-            // Support infinite recursion without stack overflow
-            // NOTE: THIS MUST BE UNCONDITIONAL
-            card_idx = -1;
+            break;
+          default: {
+            if(is_note_card(card)) {
+              play_note(card);
+              pause_millis = 100;
+            }
+            break;
           }
-          break;
-        default: {
-          if(is_note_card(card)) {
-            play_note(card);
-            pause_millis = 100;
-          }
-          break;
         }
+      }
+      if(!card_sets_condition(card)) {
+        condition = 0;
       }
       ++card_idx;
       set_glow(0,0,0);
-    } else {
+    } else if(paused) {
       set_pause_glow(paused_start_ms);
       pause_millis = 1;
-    }   
-    
+    }
+        
     for(const unsigned long smillis = millis();(millis() - smillis) < pause_millis;) {
       CardId scanned = read_one_card();
       if(scanned == kCardReset) {

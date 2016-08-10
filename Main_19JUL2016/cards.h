@@ -41,6 +41,7 @@ enum CardId {
 
 void init_cards();
 CardId read_one_card();
+boolean card_sets_condition(CardId card);
 void flush_cards();
 boolean is_key_card(CardId card);
 boolean is_note_card(CardId card);
