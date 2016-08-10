@@ -2,6 +2,10 @@
 #include<SPIFlash.h>
 #include<SPI.h>
 
+#include <Wire.h>
+#include <L3G4200D.h>
+#include <PID_v1.h>
+
 #include <Adafruit_NeoPixel.h>
 #include <MFRC522.h>
 
@@ -17,7 +21,7 @@
 #include "lights.h"
 #include "sound.h"
 #include "jingles.h"
-#include "motors.h"
+#include "move.h"
 #include "arms.h"
 
 const int trigPin = 19;
@@ -25,6 +29,8 @@ const int echoPin = 20;
 
 IdleGlow idle_glow(2000000L, 255, 255, 255);
 const int between_cards_default_pause = 300;
+
+const int sStackDepthLimit = 200; 
 
 CardSequence main_sequence, stored_sequence;
 
@@ -34,7 +40,7 @@ const int straight_ticks = 800;
 const int turn_ticks = 400;
 
 void setup() {
-  init_motors();
+  init_movement();
   init_sound();
   
   pinMode(trigPin, OUTPUT);
@@ -74,7 +80,7 @@ void do_pause_glow(int pause_millis) {
   }
 }
 
-void execute_sequence(CardSequence const&sequence) {  
+void execute_sequence(CardSequence const&sequence, int depth = 1) {  
   static float arm_pos = 0.65f;
   boolean paused = false;
   unsigned long paused_start_ms = 0;
@@ -86,16 +92,16 @@ void execute_sequence(CardSequence const&sequence) {
       const CardId card = sequence.atIndex(card_idx);
       switch(card) {
         case kCardForward:
-          do_move(1,1,straight_ticks);
+          move_straight(straight_ticks);
           break;
         case kCardBackward:
-          do_move(-1,-1,straight_ticks);
+          move_straight(-straight_ticks);
           break;
         case kCardLeft:
-          do_move(-1,1,turn_ticks);
+          turn(-90);
           break;
         case kCardRight:
-          do_move(1,-1,turn_ticks);
+          turn(90);
           break;
         case kCardLift:
           set_arms(arm_pos, 1.0f - arm_pos, 400);
@@ -105,8 +111,19 @@ void execute_sequence(CardSequence const&sequence) {
           do_pause_glow(1000);
           break;
         case kCardRepeat:
-          if(&sequence != &stored_sequence)
-            execute_sequence(stored_sequence);
+          // TODO: Infinite recursion
+          if(&sequence != &stored_sequence) {
+            if(depth <= sStackDepthLimit) {
+              execute_sequence(stored_sequence, depth+1);
+            } else {
+              // Refuse to recurse too deeply
+              error_jingle();
+            }
+          } else {
+            // Support infinite recursion without stack overflow
+            // NOTE: THIS MUST BE UNCONDITIONAL
+            card_idx = -1;
+          }
           break;
         default: {
           if(is_note_card(card)) {

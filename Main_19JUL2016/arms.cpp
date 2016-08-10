@@ -1,5 +1,5 @@
 
-#include "motors.h"
+#include "arms.h"
 #include <Arduino.h>
 
 const int pin_left_servo = 3;
