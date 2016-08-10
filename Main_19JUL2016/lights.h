@@ -18,6 +18,9 @@ public:
   void set(byte glow_r, 
            byte glow_g, 
            byte glow_b);
+  float get_r()const;
+  float get_g()const;
+  float get_b()const;
   void do_glow();
 private:
   const unsigned long glow_period_micros;

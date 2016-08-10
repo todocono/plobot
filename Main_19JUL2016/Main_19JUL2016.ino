@@ -39,6 +39,10 @@ CardSequence *current_sequence = &main_sequence;
 const int straight_ticks = 800;
 const int turn_ticks = 400;
 
+void default_glow() {
+  set_glow(idle_glow.get_r(), idle_glow.get_g(), idle_glow.get_b());
+}
+
 void setup() {
   init_movement();
   init_sound();
@@ -89,6 +93,8 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
   
   // If condition is -1, the action is not taken. 
   int condition = 0;
+  
+  default_glow();
   
   for(int card_idx=0;card_idx<sequence.count();) {
     Serial.print("Condition IS ");
@@ -152,7 +158,7 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
         condition = 0;
       }
       ++card_idx;
-      set_glow(0,0,0);
+      default_glow();
     } else if(paused) {
       set_pause_glow(paused_start_ms);
       pause_millis = 1;

@@ -57,4 +57,19 @@ void IdleGlow::set(byte glow_r,
     this->glow_b = glow_b;
 }
 
+float IdleGlow::get_r()const {
+  return glow_r;
+}
+
+float IdleGlow::get_g()const {
+  return glow_g;
+}
+
+
+float IdleGlow::get_b()const {
+  return glow_b;
+}
+
+
+
 
