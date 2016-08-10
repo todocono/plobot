@@ -10,24 +10,7 @@ void init_cards() {
   mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
 }
 
-CardId read_one_card() {
-  if(!mfrc522.PICC_IsNewCardPresent()) {
-     return kCardNull;
-  }
-
-  if(!mfrc522.PICC_ReadCardSerial()) {
-    return kCardNull;
-  }
-
-  uint32_t raw_id = 0;
-  if(mfrc522.uid.size != sizeof(raw_id)) {
-    Serial.print("ERROR: Card has wrong UID size: ");
-    Serial.println(mfrc522.uid.size);
-    return kCardNull;
-  }
-  memcpy(&raw_id, mfrc522.uid.uidByte, sizeof(raw_id));
-Serial.print("raw_id ");
-Serial.println(raw_id);
+CardId raw_id_to_card_id(uint32_t raw_id) {
   CardId ret = kCardNull;
 
   switch(raw_id) {
@@ -123,12 +106,62 @@ Serial.println(raw_id);
       break;
     case 3310867317:
       ret = kCardMusicSi;
-      break;	
+      break;
+  }
 
-    default:
-      Serial.print("Unknown card ID received: ");
-      Serial.println(raw_id);
-      ret = kCardNull;
+  return ret;
+}
+
+CardId read_one_card() {
+  if(!mfrc522.PICC_IsNewCardPresent()) {
+     return kCardNull;
+  }
+
+  if(!mfrc522.PICC_ReadCardSerial()) {
+    return kCardNull;
+  }
+
+  uint32_t raw_id = 0;
+  if(mfrc522.uid.size != sizeof(raw_id)) {
+    Serial.print("ERROR: Card has wrong UID size: ");
+    Serial.println(mfrc522.uid.size);
+    return kCardNull;
+  }
+  memcpy(&raw_id, mfrc522.uid.uidByte, sizeof(raw_id));
+  CardId ret = raw_id_to_card_id(raw_id);
+
+  // Try again with sector read
+  if(ret == kCardNull) {
+    MFRC522::MIFARE_Key key;
+    memset(&key, 0xFF, sizeof(key));
+    
+    byte buffer[18];
+    byte size = sizeof(buffer);
+    byte trailerBlock   = 7;
+    byte blockAddr      = 4;
+    MFRC522::StatusCode status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) {
+        Serial.println("Failed to authenticate with card");
+        return kCardNull;
+    }
+    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.println("Failed to read sector from card");
+        return kCardNull;
+    }
+    
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
+    
+    memcpy(&raw_id, buffer, sizeof(raw_id));
+    
+    ret = raw_id_to_card_id(raw_id);
+  }
+  
+  if(ret == kCardNull) {
+    Serial.print("Unknown card ID received: ");
+    Serial.println(raw_id);
+    return kCardNull;
   }
 
   // One card at a time
