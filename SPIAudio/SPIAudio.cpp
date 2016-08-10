@@ -113,7 +113,7 @@ boolean SPIAudio::RecordBlocks(SPIFlash &flash, unsigned long block, unsigned lo
     for(uint16_t idx=0;idx<256;++idx) {
       const int raw_val = analogRead(mic);
       const int val = raw_val - avg_val;
-      uint8_t sample = max(0, min(255, 0x80 + val / 2));
+      uint8_t sample = max(0, min(255, 0x80 + val));
       flash._writeNextByte(sample, true);
       
       _delay_loop_1(rateDelay);
