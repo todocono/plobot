@@ -21,6 +21,7 @@
 #include "lights.h"
 #include "sound.h"
 #include "jingles.h"
+#include "sense.h"
 #include "move.h"
 #include "arms.h"
 
@@ -60,6 +61,7 @@ void setup() {
   
   init_cards();
   init_arms();
+  init_sense();
   
   randomSeed(SPIAudio::mic_read());
   
@@ -126,8 +128,9 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
             break;
           case kCardRandom:
             condition = (random(0,2) == 0) ? -1 : 1;
-      Serial.print("Condition set to ");
-      Serial.println(condition);
+            break;
+          case kCardSee:
+            condition = (sense_distance_cm() > 10.0f) ? -1 : 1;
             break;
           case kCardRepeat:
             // TODO: Infinite recursion
