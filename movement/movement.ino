@@ -11,6 +11,7 @@ const int pin_spk_dir = 23;
 void setup() {
   pinMode(pin_spk_dir, OUTPUT);
   pinMode(pin_spk_en, OUTPUT);
+
   Serial.begin(57600);
   init_movement();
   
@@ -18,8 +19,12 @@ void setup() {
 }
 
 void loop() {
+
+  delay(500);
   Serial.println("Turning...");
   turn(90);
-  Serial.println("Waiting...");
-  delay(1000);
+
+  delay(500);
+  Serial.println("Moving sraight...");
+  move_straight(1300);
 }

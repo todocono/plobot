@@ -34,3 +34,5 @@ audio_test/SPIAudio.cpp
 audio_test/SPIAudio.h
 
 upload_audio/upload_stream
+
+pcb_new/main/main_pcb_new_id.PcbDoc.htm

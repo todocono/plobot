@@ -165,4 +165,75 @@ void turn(int degs)
   analogWrite(motor_r_en, 0);
 }
 
+void move_straight(const int pulses)
+{
+  count_left = PulseCounter(motor_l_pulse);
+  count_right = PulseCounter(motor_r_pulse);
+
+  // Max should be <255 for bootstrap
+  const int min_power = 145, max_power = 180;
+  const unsigned long sm = micros();
+  if(pulses >= 0) {
+    digitalWrite(motor_l_dir, HIGH);
+  } else {
+    digitalWrite(motor_l_dir, LOW);
+  }
+  if(pulses >= 0)
+    digitalWrite(motor_r_dir, HIGH);
+  else
+    digitalWrite(motor_r_dir, LOW);
+
+  // TODO: PID
+  unsigned long last_off_target = millis();
+  const unsigned long started_move = millis();
+  
+  while((millis() - last_off_target) < 500 && (millis() - started_move) < 2000L) {
+    const int max_pulses = max(count_left.pulses(), count_right.pulses());
+    const int iclp = count_left.pulses();
+    const int icrp = count_right.pulses();
+    const boolean mismatch = abs(int(iclp) - int(icrp)) > 5;
+    const boolean arrived = max_pulses >= abs(pulses);
+    if(!arrived || mismatch) {
+      last_off_target = millis();
+    }
+    const int avg_pulses = (count_left.pulses() + count_right.pulses()) / 2;
+    const int triangle = (avg_pulses > pulses / 2) ? (pulses - 16*avg_pulses) : 4*avg_pulses;
+
+    const int mtr_speed = max(min_power, min(max_power, min_power + triangle));
+
+    if(!arrived) {
+      if(mismatch) {
+        if(iclp > icrp) {
+          analogWrite(motor_r_en, 0);   
+          analogWrite(motor_l_en, mtr_speed);
+        } else {
+          analogWrite(motor_r_en, mtr_speed);   
+          analogWrite(motor_l_en, 0);
+        }
+        
+      } else {
+        analogWrite(motor_r_en, mtr_speed);   
+        analogWrite(motor_l_en, mtr_speed);   
+      }
+    } else {
+      if(abs(int(iclp) - int(icrp)) < 15) {
+          analogWrite(motor_l_en, 0);
+          analogWrite(motor_r_en, 0);
+      } else {
+        if(iclp > icrp) {
+          analogWrite(motor_r_en, 0);   
+          analogWrite(motor_l_en, min_power);
+        } else {
+          analogWrite(motor_r_en, min_power);   
+          analogWrite(motor_l_en, 0);
+        }
+      }
+    }
+  }
+  analogWrite(motor_r_en, 0);
+  analogWrite(motor_l_en, 0);
+
+}
+
+
 
