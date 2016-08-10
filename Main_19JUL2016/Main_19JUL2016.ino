@@ -114,10 +114,10 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
             move_straight(-straight_ticks);
             break;
           case kCardLeft:
-            turn(-90);
+            turn(90);
             break;
           case kCardRight:
-            turn(90);
+            turn(-90);
             break;
           case kCardLift:
             set_arms(arm_pos, 1.0f - arm_pos, 400);
