@@ -77,11 +77,20 @@ CardId raw_id_to_card_id(uint32_t raw_id) {
     case 4023831934:
       ret = kCardYellow;
       break;
+/*
     case 4023282862:
       ret = kCardPink;
       break;
     case 4024213694:
       ret = kCardPurple;
+      break;
+*/
+    // Indigo / violet
+    case 4023282862:
+      ret = kCardPurple;
+      break;
+    case 4024213694:
+      ret = kCardPink;
       break;
     case 4024006366:
       ret = kCardBlue;
