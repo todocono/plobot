@@ -20,6 +20,8 @@ boolean StreamBlocks(SPIFlash &flash, unsigned long fromBlock, unsigned long cou
 // This is a blocking function
 boolean RecordBlocks(SPIFlash &flash, unsigned long fromBlock, unsigned long count, AudioRate rate);
 
+int mic_read();
+
 }
 
 

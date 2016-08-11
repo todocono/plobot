@@ -40,7 +40,10 @@ void SPIAudio::Setup()
   TCCR2A = (TCCR2A | _BV(COM2A1)) & ~_BV(COM2A0);
   TCCR2A &= ~(_BV(COM2B1) | _BV(COM2B0));
   TCCR2B = (TCCR2B & ~(_BV(CS12) | _BV(CS11))) | _BV(CS10);
-  
+}
+
+int SPIAudio::mic_read() {
+  return analogRead(mic);
 }
 
 boolean SPIAudio::StreamBlocks(SPIFlash &flash, unsigned long block, unsigned long count, AudioRate rate)
@@ -113,7 +116,7 @@ boolean SPIAudio::RecordBlocks(SPIFlash &flash, unsigned long block, unsigned lo
     for(uint16_t idx=0;idx<256;++idx) {
       const int raw_val = analogRead(mic);
       const int val = raw_val - avg_val;
-      uint8_t sample = max(0, min(255, 0x80 + val));
+      uint8_t sample = max(0, min(255, 0x80 + val / 2));
       flash._writeNextByte(sample, true);
       
       _delay_loop_1(rateDelay);
