@@ -3,8 +3,9 @@
 #include <Arduino.h>
 #include <MFRC522.h>
 
+MFRC522 mfrc522(14, 29);
+
 void init_cards() {
-  MFRC522 mfrc522(14, 29);
   mfrc522.PCD_Init();		// Init MFRC522
   mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
 }
@@ -120,9 +121,20 @@ CardId raw_id_to_card_id(uint32_t raw_id) {
   return ret;
 }
 
-CardId read_one_card() {
-  MFRC522 mfrc522(14, 29);
+class CryptoHalter {
+ private:
+  MFRC522 &mfrc522;
+ public:
+  CryptoHalter(MFRC522 &mfrc522)
+   : mfrc522(mfrc522) {
+  }
+  ~CryptoHalter() {
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
+  }
+};
 
+CardId read_one_card() {
   if(!mfrc522.PICC_IsNewCardPresent()) {
      return kCardNull;
   }
@@ -154,15 +166,13 @@ CardId read_one_card() {
         Serial.println("Failed to authenticate with card");
         return kCardNull;
     }
+    CryptoHalter halter(mfrc522);
     status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         Serial.println("Failed to read sector from card");
         return kCardNull;
     }
-    
-    mfrc522.PICC_HaltA();
-    mfrc522.PCD_StopCrypto1();
-    
+        
     memcpy(&raw_id, buffer, sizeof(raw_id));
     
     ret = raw_id_to_card_id(raw_id);
@@ -181,11 +191,9 @@ CardId read_one_card() {
 }
 
 void flush_cards() {
-  /*
   while(mfrc522.PICC_IsNewCardPresent()) {
     mfrc522.PICC_ReadCardSerial();
   }
-  */
 }
 
 boolean is_key_card(CardId card) {
