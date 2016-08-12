@@ -4,8 +4,6 @@
 #include <PID_v1.h>
 #include <Wire.h>
 
-L3G4200D gyroscope;
-
 const int motor_l_pulse = 28;
 const int motor_r_pulse = 27;
 
@@ -81,23 +79,26 @@ void init_movement() {
   
   Wire.begin();
 
-  // Set scale 250 dps and 400HZ Output data rate (cut-off 50)
-  while(!gyroscope.begin(L3G4200D_SCALE_250DPS, L3G4200D_DATARATE_400HZ_50))
-  {
-    Serial.println("Could not find a valid L3G4200D sensor, check wiring!");
-    delay(500);
-  }
-  gyroscope.calibrate(100);
 }
 
 void turn(int degs)
 {
+  L3G4200D gyroscope;
+
+  // Set scale 250 dps and 400HZ Output data rate (cut-off 50)
+  while(!gyroscope.begin(L3G4200D_SCALE_250DPS, L3G4200D_DATARATE_400HZ_50))
+  {
+    Serial.println("Could not find a valid L3G4200D sensor, check wiring!");
+    return;
+  }
+  
+  gyroscope.calibrate(100);
+
   count_left = PulseCounter(motor_l_pulse);
   count_right = PulseCounter(motor_r_pulse);
 
   double Setpoint = 0, Input = 0, Output = 0;
   const double scale_factor = 7000000.0f;
-//  PID myPID(&Input, &Output, &Setpoint,10 / scale_factor,5 / scale_factor,3 / scale_factor, DIRECT);
   PID myPID(&Input, &Output, &Setpoint,9.5 / scale_factor,4 / scale_factor,3.5 / scale_factor, DIRECT);
   myPID.SetMode(AUTOMATIC);
   // Max should be <255 for bootstrap
@@ -165,7 +166,7 @@ void turn(int degs)
   analogWrite(motor_r_en, 0);
 }
 
-void move_straight(const int pulses)
+void move_straight(int pulses)
 {
   count_left = PulseCounter(motor_l_pulse);
   count_right = PulseCounter(motor_r_pulse);
@@ -175,13 +176,13 @@ void move_straight(const int pulses)
   const unsigned long sm = micros();
   if(pulses >= 0) {
     digitalWrite(motor_l_dir, HIGH);
+    digitalWrite(motor_r_dir, HIGH);
   } else {
+    digitalWrite(motor_r_dir, LOW);
     digitalWrite(motor_l_dir, LOW);
   }
-  if(pulses >= 0)
-    digitalWrite(motor_r_dir, HIGH);
-  else
-    digitalWrite(motor_r_dir, LOW);
+  
+  pulses = abs(pulses);
 
   // TODO: PID
   unsigned long last_off_target = millis();
@@ -192,7 +193,7 @@ void move_straight(const int pulses)
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
     const boolean mismatch = abs(int(iclp) - int(icrp)) > 5;
-    const boolean arrived = max_pulses >= abs(pulses);
+    const boolean arrived = max_pulses >= pulses;
     if(!arrived || mismatch) {
       last_off_target = millis();
     }
@@ -232,7 +233,6 @@ void move_straight(const int pulses)
   }
   analogWrite(motor_r_en, 0);
   analogWrite(motor_l_en, 0);
-
 }
 
 
