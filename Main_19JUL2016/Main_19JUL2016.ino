@@ -37,6 +37,7 @@ CardSequence *current_sequence = &main_sequence;
 
 const int battery_level_pin = 26;
 const int battery_low_level = 700;
+const float sDeadBatteryVolts = (float(battery_low_level) / 1024.0f) * (3.3f * 3.0f);
 
 const int straight_ticks = 800;
 const int turn_ticks = 400;
@@ -85,10 +86,10 @@ void setup() {
     print_battery_level();
     float batt_volts = battery_voltage();
     if(batt_volts > 7.4f) {
-      set_glow(0,0,255);
+      set_glow(0,255,0);
     } else if(batt_volts > 7.0f) {
       set_glow(255,255,0);
-    } else {
+    } else if(batt_volts > sDeadBatteryVolts) {
       set_glow(255,128,0);
     }
     delay(1500);
