@@ -88,9 +88,9 @@ void setup() {
     if(batt_volts > 7.4f) {
       set_glow(0,255,0);
     } else if(batt_volts > 7.0f) {
-      set_glow(255,255,0);
+      set_glow(0,0,255);
     } else if(batt_volts > sDeadBatteryVolts) {
-      set_glow(255,128,0);
+      set_glow(255,255,0);
     }
     delay(1500);
   }
