@@ -45,11 +45,15 @@ void default_glow() {
   set_glow(idle_glow.get_r(), idle_glow.get_g(), idle_glow.get_b());
 }
 
-void print_battery_level() {
+float battery_voltage() {
   const int battery_level = analogRead(battery_level_pin);
   float battery_voltage = float(battery_level) * ((3.3f * 3.0f) / 1024.0f);
+  return battery_voltage;
+}
+
+void print_battery_level() {
   Serial.print("Battery voltage: ");
-  Serial.print(battery_voltage);
+  Serial.print(battery_voltage());
   Serial.print("v");
   Serial.println();
 }
@@ -76,7 +80,19 @@ void setup() {
   
   set_arms(0.0f, 1.0f, 400);
   
-  print_battery_level();
+  // Show battery level
+  {
+    print_battery_level();
+    float batt_volts = battery_voltage();
+    if(batt_volts > 7.4f) {
+      set_glow(0,0,255);
+    } else if(batt_volts > 7.0f) {
+      set_glow(255,255,0);
+    } else {
+      set_glow(255,128,0);
+    }
+    delay(1500);
+  }
 }
 
 void do_reset() {
