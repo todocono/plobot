@@ -78,7 +78,20 @@ void init_movement() {
   pciSetup(motor_r_pulse);
   
   Wire.begin();
-
+  
+  // TODO: Hack: First calibration is somehow wrong
+  {
+    L3G4200D gyroscope;
+  
+    // Set scale 250 dps and 400HZ Output data rate (cut-off 50)
+    while(!gyroscope.begin(L3G4200D_SCALE_250DPS, L3G4200D_DATARATE_400HZ_50))
+    {
+      Serial.println("Could not find a valid L3G4200D sensor, check wiring!");
+      return;
+    }
+    
+    gyroscope.calibrate(100);
+  }
 }
 
 void turn(int degs)
@@ -140,7 +153,7 @@ void turn(int degs)
         digitalWrite(motor_l_dir, HIGH);
         digitalWrite(motor_r_dir, LOW);
      }
-
+Serial.println(z_total);
     int mtr_pwr = 100 + abs(Output);
 
     const int iclp = count_left.pulses();

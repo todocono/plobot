@@ -3,9 +3,8 @@
 #include <Arduino.h>
 #include <MFRC522.h>
 
-MFRC522 mfrc522(14, 29);
-
 void init_cards() {
+  MFRC522 mfrc522(14, 29);
   mfrc522.PCD_Init();		// Init MFRC522
   mfrc522.PCD_DumpVersionToSerial();	// Show details of PCD - MFRC522 Card Reader details
 }
@@ -122,6 +121,8 @@ CardId raw_id_to_card_id(uint32_t raw_id) {
 }
 
 CardId read_one_card() {
+  MFRC522 mfrc522(14, 29);
+
   if(!mfrc522.PICC_IsNewCardPresent()) {
      return kCardNull;
   }
@@ -180,9 +181,11 @@ CardId read_one_card() {
 }
 
 void flush_cards() {
+  /*
   while(mfrc522.PICC_IsNewCardPresent()) {
     mfrc522.PICC_ReadCardSerial();
   }
+  */
 }
 
 boolean is_key_card(CardId card) {
