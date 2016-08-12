@@ -25,8 +25,6 @@
 #include "move.h"
 #include "arms.h"
 
-const int trigPin = 19;
-const int echoPin = 20;
 
 IdleGlow idle_glow(2000000L, 255, 255, 255);
 const int between_cards_default_pause = 300;
@@ -36,6 +34,9 @@ const int sStackDepthLimit = 200;
 CardSequence main_sequence, stored_sequence;
 
 CardSequence *current_sequence = &main_sequence;
+
+const int battery_level_pin = 26;
+const int battery_low_level = 700;
 
 const int straight_ticks = 800;
 const int turn_ticks = 400;
@@ -47,9 +48,6 @@ void default_glow() {
 void setup() {
   init_movement();
   init_sound();
-  
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
 
   init_lights();
   
@@ -64,6 +62,8 @@ void setup() {
   init_sense();
   
   randomSeed(SPIAudio::mic_read());
+  
+  pinMode(battery_level_pin, INPUT);
   
   set_arms(0.0f, 1.0f, 400);
 }
@@ -202,6 +202,15 @@ void do_go() {
 }
 
 void loop() {
+  const int battery_level = analogRead(battery_level_pin);
+  if(battery_level < battery_low_level) {
+    set_glow(255,0,0);
+    Serial.println("!!!! LOW BATTERY !!!!");
+    delay(1000);
+    set_glow(0,0,0);
+    while(1);
+  }
+  
   // Glow
   idle_glow.do_glow();
 
