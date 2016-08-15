@@ -184,8 +184,6 @@ void move_straight(int pulses)
   count_left = PulseCounter(motor_l_pulse);
   count_right = PulseCounter(motor_r_pulse);
 
-  // Max should be <255 for bootstrap
-  const int min_power = 145, max_power = 180;
   const unsigned long sm = micros();
   if(pulses >= 0) {
     digitalWrite(motor_l_dir, HIGH);
@@ -197,11 +195,16 @@ void move_straight(int pulses)
   
   pulses = abs(pulses);
 
-  // TODO: PID
   unsigned long last_off_target = millis();
   const unsigned long started_move = millis();
   
+  // Max should be <255 for bootstrap
+  int min_power = 120, max_power = 180;
+  // 50ms grace period to start moving
+  long last_not_moving = millis() + 100;
+  
   while((millis() - last_off_target) < 500 && (millis() - started_move) < 2000L) {
+    const long now_millis = millis();
     const int max_pulses = max(count_left.pulses(), count_right.pulses());
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
@@ -212,8 +215,15 @@ void move_straight(int pulses)
     }
     const int avg_pulses = (count_left.pulses() + count_right.pulses()) / 2;
     const int triangle = (avg_pulses > pulses / 2) ? (pulses - 16*avg_pulses) : 4*avg_pulses;
-
     const int mtr_speed = max(min_power, min(max_power, min_power + triangle));
+
+    const long bump_min_speed_frequency = 20;
+    if(max_pulses < 5 && (now_millis - last_not_moving) > bump_min_speed_frequency) {
+      last_not_moving += bump_min_speed_frequency;
+      min_power += 5;
+      Serial.print("Increased min power ");
+      Serial.println(min_power);
+    }
 
     if(!arrived) {
       if(mismatch) {
