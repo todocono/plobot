@@ -125,10 +125,20 @@ void turn(int degs)
   const unsigned long started_turn = millis();
     
   Setpoint = target_z;
-  int mtr_pwr;
+  // Grace period to start moving
+  long last_not_moving = millis() + 50;
+  int min_power = 100;
 
   while((millis() - last_off_target) < 100L && (millis() - started_turn) < 2000L)
   {
+    const int max_pulses = max(count_left.pulses(), count_right.pulses());
+    const long now_millis = millis();
+    const long bump_min_speed_frequency = 10;
+    if(max_pulses < 5 && (now_millis - last_not_moving) > bump_min_speed_frequency) {
+      last_not_moving += bump_min_speed_frequency;
+      min_power += 5;
+    }
+    
      unsigned long amount_off_target = abs(z_total - target_z);
      if(amount_off_target > 2506516L) {
        last_off_target = millis();
@@ -154,7 +164,7 @@ void turn(int degs)
         digitalWrite(motor_r_dir, LOW);
      }
 
-    int mtr_pwr = 100 + abs(Output);
+    int mtr_pwr = min_power + abs(Output);
 
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
@@ -200,7 +210,7 @@ void move_straight(int pulses)
   
   // Max should be <255 for bootstrap
   int min_power = 120, max_power = 180;
-  // 50ms grace period to start moving
+  // Grace period to start moving
   long last_not_moving = millis() + 100;
   
   while((millis() - last_off_target) < 500 && (millis() - started_move) < 2000L) {
@@ -221,8 +231,7 @@ void move_straight(int pulses)
     if(max_pulses < 5 && (now_millis - last_not_moving) > bump_min_speed_frequency) {
       last_not_moving += bump_min_speed_frequency;
       min_power += 5;
-      Serial.print("Increased min power ");
-      Serial.println(min_power);
+      max_power += 5;
     }
 
     if(!arrived) {
