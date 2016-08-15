@@ -161,12 +161,14 @@ CardId read_one_card() {
     byte size = sizeof(buffer);
     byte trailerBlock   = 7;
     byte blockAddr      = 4;
+    
+    CryptoHalter halter(mfrc522);
+    
     MFRC522::StatusCode status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
         Serial.println("Failed to authenticate with card");
         return kCardNull;
     }
-    CryptoHalter halter(mfrc522);
     status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         Serial.println("Failed to read sector from card");
