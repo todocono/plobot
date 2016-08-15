@@ -153,7 +153,7 @@ void turn(int degs)
         digitalWrite(motor_l_dir, HIGH);
         digitalWrite(motor_r_dir, LOW);
      }
-Serial.println(z_total);
+
     int mtr_pwr = 100 + abs(Output);
 
     const int iclp = count_left.pulses();
