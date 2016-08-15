@@ -27,7 +27,7 @@
 
 
 IdleGlow idle_glow(2000000L, 255, 255, 255);
-const int between_cards_default_pause = 300;
+const int between_cards_default_pause = 150;
 
 const int sStackDepthLimit = 200; 
 
@@ -128,7 +128,7 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
   for(int card_idx=0;card_idx<sequence.count();) {
     Serial.print("Condition IS ");
     Serial.println(condition);
-    unsigned long pause_millis = between_cards_default_pause;
+    unsigned long pause_millis = 1;
     
     const CardId card = sequence.atIndex(card_idx);
     if(!paused) {
@@ -149,6 +149,7 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
           case kCardLift:
             set_arms(arm_pos, 1.0f - arm_pos, 400);
             arm_pos = (arm_pos == 0.0f) ? 0.65f : 0.0f;
+            pause_millis = between_cards_default_pause;
             break;
           case kCardPause:
             do_pause_glow(1000);

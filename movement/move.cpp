@@ -132,7 +132,7 @@ boolean turn(int degs)
 
   while((millis() - last_off_target) < 200L)
   {
-    if((millis() - started_turn) >= 2000L) {
+    if((millis() - started_turn) >= 1500L) {
       Serial.println("---- Timed out");
       ret = false;
       break;
@@ -150,7 +150,11 @@ boolean turn(int degs)
      if(off_target) {
        last_off_target = now_millis;
      }
-
+/*
+Serial.print("--- ");
+Serial.print(float(amount_off_target) / 1000000.0f);
+Serial.println(off_target ? "true" : "false");
+*/
     const unsigned long read_sensor_time = micros();
     Vector norm = gyroscope.readNormalize();
     const long time_since_read = (read_sensor_time - last_read_sensor);
@@ -223,7 +227,7 @@ boolean move_straight(int pulses)
   boolean ret = true;
   
   while((millis() - last_off_target) < 200) {
-    if((millis() - started_move) >= 2000L) {
+    if((millis() - started_move) >= 2500L) {
       Serial.println("--- Timed out");
       ret=false;
       break;
@@ -234,7 +238,7 @@ boolean move_straight(int pulses)
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
     const int left_right_diff = abs(int(iclp) - int(icrp));
-    const boolean mismatch = left_right_diff > 5;
+    const boolean mismatch = left_right_diff > 3;
     const boolean arrived = max_pulses >= pulses;
     if(!arrived || (left_right_diff > 20)) {
       last_off_target = millis();
