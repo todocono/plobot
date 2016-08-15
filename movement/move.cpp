@@ -94,7 +94,7 @@ void init_movement() {
   }
 }
 
-void turn(int degs)
+boolean turn(int degs)
 {
   L3G4200D gyroscope;
 
@@ -102,7 +102,7 @@ void turn(int degs)
   while(!gyroscope.begin(L3G4200D_SCALE_250DPS, L3G4200D_DATARATE_400HZ_50))
   {
     Serial.println("Could not find a valid L3G4200D sensor, check wiring!");
-    return;
+    return false;
   }
   
   gyroscope.calibrate(100);
@@ -112,7 +112,7 @@ void turn(int degs)
 
   double Setpoint = 0, Input = 0, Output = 0;
   const double scale_factor = 7000000.0f;
-  PID myPID(&Input, &Output, &Setpoint,9.5 / scale_factor,4 / scale_factor,3.5 / scale_factor, DIRECT);
+  PID myPID(&Input, &Output, &Setpoint,13 / scale_factor,4 / scale_factor,3.5 / scale_factor, DIRECT);
   myPID.SetMode(AUTOMATIC);
   // Max should be <255 for bootstrap
   myPID.SetOutputLimits(-70, 70);
@@ -128,9 +128,15 @@ void turn(int degs)
   // Grace period to start moving
   long last_not_moving = millis() + 50;
   int min_power = 100;
+  boolean ret = true;
 
-  while((millis() - last_off_target) < 100L && (millis() - started_turn) < 2000L)
+  while((millis() - last_off_target) < 200L)
   {
+    if((millis() - started_turn) >= 2000L) {
+      Serial.println("---- Timed out");
+      ret = false;
+      break;
+    }
     const int max_pulses = max(count_left.pulses(), count_right.pulses());
     const long now_millis = millis();
     const long bump_min_speed_frequency = 10;
@@ -140,8 +146,9 @@ void turn(int degs)
     }
     
      unsigned long amount_off_target = abs(z_total - target_z);
-     if(amount_off_target > 2506516L) {
-       last_off_target = millis();
+     const boolean off_target = amount_off_target > 1500000L;
+     if(off_target) {
+       last_off_target = now_millis;
      }
 
     const unsigned long read_sensor_time = micros();
@@ -164,7 +171,7 @@ void turn(int degs)
         digitalWrite(motor_r_dir, LOW);
      }
 
-    int mtr_pwr = min_power + abs(Output);
+    int mtr_pwr = off_target ? (min_power + abs(Output)) : 0;
 
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
@@ -187,9 +194,10 @@ void turn(int degs)
   }
   analogWrite(motor_l_en, 0);
   analogWrite(motor_r_en, 0);
+  return ret;
 }
 
-void move_straight(int pulses)
+boolean move_straight(int pulses)
 {
   count_left = PulseCounter(motor_l_pulse);
   count_right = PulseCounter(motor_r_pulse);
@@ -209,18 +217,26 @@ void move_straight(int pulses)
   const unsigned long started_move = millis();
   
   // Max should be <255 for bootstrap
-  int min_power = 120, max_power = 180;
+  int min_power = 145, max_power = 200;
   // Grace period to start moving
   long last_not_moving = millis() + 100;
+  boolean ret = true;
   
-  while((millis() - last_off_target) < 500 && (millis() - started_move) < 2000L) {
+  while((millis() - last_off_target) < 200) {
+    if((millis() - started_move) >= 2000L) {
+      Serial.println("--- Timed out");
+      ret=false;
+      break;
+    }
+    
     const long now_millis = millis();
     const int max_pulses = max(count_left.pulses(), count_right.pulses());
     const int iclp = count_left.pulses();
     const int icrp = count_right.pulses();
-    const boolean mismatch = abs(int(iclp) - int(icrp)) > 5;
+    const int left_right_diff = abs(int(iclp) - int(icrp));
+    const boolean mismatch = left_right_diff > 5;
     const boolean arrived = max_pulses >= pulses;
-    if(!arrived || mismatch) {
+    if(!arrived || (left_right_diff > 20)) {
       last_off_target = millis();
     }
     const int avg_pulses = (count_left.pulses() + count_right.pulses()) / 2;
@@ -263,8 +279,10 @@ void move_straight(int pulses)
       }
     }
   }
+  Serial.println(millis() - started_move);
   analogWrite(motor_r_en, 0);
   analogWrite(motor_l_en, 0);
+  return ret;
 }
 
 

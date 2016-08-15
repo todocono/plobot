@@ -2,10 +2,12 @@
 #ifndef MOVE_H
 #define MOVE_H
 
+#include <Arduino.h>
+
 void init_movement();
-void turn(int degs);
+boolean turn(int degs);
 // Sign determines forward/back
-void move_straight(int pulses);
+boolean move_straight(int pulses);
 
 #endif//MOVE_H
 
