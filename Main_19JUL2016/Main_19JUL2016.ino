@@ -142,9 +142,11 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
             break;
           case kCardLeft:
             turn(90);
+            pause_millis = 200;
             break;
           case kCardRight:
             turn(-90);
+            pause_millis = 200;
             break;
           case kCardLift:
             set_arms(arm_pos, 1.0f - arm_pos, 400);
@@ -194,7 +196,6 @@ void execute_sequence(CardSequence const&sequence, int depth = 1) {
       set_pause_glow(paused_start_ms);
       pause_millis = 1;
     }
-        
     for(const unsigned long smillis = millis();(millis() - smillis) < pause_millis;) {
       CardId scanned = read_one_card();
       if(scanned == kCardReset) {
