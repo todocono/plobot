@@ -39,7 +39,7 @@ const int battery_level_pin = 26;
 const int battery_low_level = 700;
 const float sDeadBatteryVolts = (float(battery_low_level) / 1024.0f) * (3.3f * 3.0f);
 
-const int straight_ticks = 800;
+const int straight_ticks = 900;
 const int turn_ticks = 400;
 
 void default_glow() {
