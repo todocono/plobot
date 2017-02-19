@@ -1,0 +1,6 @@
+Record=SheetSymbol|SourceDocument=connections.SchDoc|Designator=U_audio|SchDesignator=U_audio|FileName=audio.SchDoc|SymbolType=Normal|RawFileName=audio.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=connections.SchDoc|Designator=U_cpu|SchDesignator=U_cpu|FileName=cpu.SchDoc|SymbolType=Normal|RawFileName=cpu.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=connections.SchDoc|Designator=U_inout|SchDesignator=U_inout|FileName=inout.SchDoc|SymbolType=Normal|RawFileName=inout.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=connections.SchDoc|Designator=U_motion|SchDesignator=U_motion|FileName=motion.SchDoc|SymbolType=Normal|RawFileName=motion.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=SheetSymbol|SourceDocument=connections.SchDoc|Designator=U_rfid|SchDesignator=U_rfid|FileName=rfid.SchDoc|SymbolType=Normal|RawFileName=rfid.SchDoc|DesignItemId= |SourceLibraryName= |ObjectKind=Sheet Symbol
+Record=TopLevelDocument|FileName=connections.SchDoc
