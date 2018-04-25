@@ -1,5 +1,7 @@
 # ATTENTION: Files here are deprecated
-# Plobot is a project started in 2015 by Camilo Parra Palacios and Rodolfo Cossovich
+
+
+Plobot is a project started in 2015 by Camilo Parra Palacios and Rodolfo Cossovich. The project website is hosted at http://plobot.com
 
 This repository had various contributors, mainly Sean, Ivan and Arlen. I moved files for maintenance to the repositories:
 
